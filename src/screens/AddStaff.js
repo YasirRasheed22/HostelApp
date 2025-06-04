@@ -1,0 +1,387 @@
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  Image,
+  PermissionsAndroid,
+  Platform,
+} from 'react-native';
+import React, {useState} from 'react';
+import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import EvilIcons from 'react-native-vector-icons/EvilIcons';
+import {Modal, PaperProvider, Portal, TextInput} from 'react-native-paper';
+import CheckBox from '@react-native-community/checkbox';
+
+const facilitiesList = [
+  'Tenants',
+  'Staff',
+  'Reports',
+  'Rooms',
+  'Assets',
+  'Attendance',
+  'Accounts',
+];
+
+export default function AddStaff() {
+  const [selectedImage, setSelectedImage] = useState();
+  const [name, setName] = useState('');
+  const [cnic, setCnic] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [salary, setSalary] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [emergencyContact, setEmergencyContact] = useState('');
+  const [paymentDate, setPaymentDate] = useState('');
+  const [role, setRole] = useState('');
+  const [paymentDateModalVisible, setPaymentDateModalVisible] = useState(false);
+  const [roleModalVisible, setRoleModalVisible] = useState(false);
+  const [selectedFacilities, setSelectedFacilities] = useState([]);
+  const [checkAll, setCheckAll] = useState(false);
+
+  const toggleFacility = item => {
+    const exists = selectedFacilities.includes(item);
+    if (exists) {
+      const updated = selectedFacilities.filter(f => f !== item);
+      setSelectedFacilities(updated);
+      setCheckAll(false);
+    } else {
+      const updated = [...selectedFacilities, item];
+      setSelectedFacilities(updated);
+      setCheckAll(updated.length === facilitiesList.length);
+    }
+  };
+
+  const toggleAll = () => {
+    if (checkAll) {
+      setSelectedFacilities([]);
+      setCheckAll(false);
+    } else {
+      setSelectedFacilities(facilitiesList);
+      setCheckAll(true);
+    }
+  };
+
+  const requestCameraPermission = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        {
+          title: 'Camera Permission',
+          message: 'App needs access to your camera',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return true;
+  };
+
+  const handleImagePick = () => {
+    Alert.alert('Choose Option', 'Camera or Gallery', [
+      {text: 'Take Photo', onPress: handleCameraLaunch},
+      {text: 'Choose Gallery', onPress: openImagePicker},
+      {text: 'Cancel', style: 'cancel'},
+    ]);
+  };
+
+  const openImagePicker = () => {
+    launchImageLibrary({mediaType: 'photo'}, response => {
+      const uri = response.assets?.[0]?.uri;
+      if (uri) setSelectedImage(uri);
+    });
+  };
+
+  const handleCameraLaunch = async () => {
+    if (!(await requestCameraPermission())) {
+      Alert.alert('Permission Denied', 'Camera access is required');
+      return;
+    }
+    launchCamera({mediaType: 'photo'}, response => {
+      const uri = response.assets?.[0]?.uri;
+      if (uri) setSelectedImage(uri);
+    });
+  };
+
+  const handleSave = () => {
+    if (!name || !phone || !role || !password || password !== confirmPassword) {
+      Alert.alert('Validation Error', 'Please fill all fields correctly.');
+      return;
+    }
+
+    // Handle save logic here (API call or local state)
+    Alert.alert('Success', 'Staff member added!');
+  };
+
+  return (
+    <PaperProvider>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Add staff</Text>
+        <View style={styles.separator} />
+
+        <Text style={styles.sectionTitle}>Personal Information</Text>
+
+        <View style={styles.imageContainer}>
+          <TouchableOpacity onPress={handleImagePick}>
+            {selectedImage ? (
+              <Image source={{uri: selectedImage}} style={styles.roundImage} />
+            ) : (
+              <View style={styles.iconCircle}>
+                <EvilIcons name="image" size={50} color="#888" />
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={{gap: 12}}>
+          <TextInput
+            label="Full Name"
+            value={name}
+            onChangeText={setName}
+            style={styles.input}
+          />
+          <TextInput
+            label="CNIC/B-FORM"
+            value={cnic}
+            onChangeText={setCnic}
+            style={styles.input}
+          />
+          <TextInput
+            label="Phone No"
+            value={phone}
+            onChangeText={setPhone}
+            style={styles.input}
+          />
+          <TextInput
+            label="E-Mail"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+          />
+          <TextInput
+            label="Salary"
+            value={salary}
+            onChangeText={setSalary}
+            style={styles.input}
+          />
+
+          <TouchableOpacity
+            onPress={() => setPaymentDateModalVisible(true)}
+            style={styles.genderSelector}>
+            <Text style={{color: paymentDate ? '#000' : '#888'}}>
+              {paymentDate || 'Select Payment Date'}
+            </Text>
+          </TouchableOpacity>
+          <Portal>
+            <Modal
+              visible={paymentDateModalVisible}
+              onDismiss={() => setPaymentDateModalVisible(false)}
+              contentContainerStyle={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Select Payment Date</Text>
+              {['01', '02', '03'].map(item => (
+                <TouchableOpacity
+                  key={item}
+                  onPress={() => {
+                    setPaymentDate(item);
+                    setPaymentDateModalVisible(false);
+                  }}
+                  style={styles.modalItem}>
+                  <Text style={styles.modalItemText}>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </Modal>
+          </Portal>
+
+          <TextInput
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={styles.input}
+          />
+          <TextInput
+            label="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            style={styles.input}
+          />
+
+          <TouchableOpacity
+            onPress={() => setRoleModalVisible(true)}
+            style={styles.genderSelector}>
+            <Text style={{color: role ? '#000' : '#888'}}>
+              {role || 'Select Role'}
+            </Text>
+          </TouchableOpacity>
+          <Portal>
+            <Modal
+              visible={roleModalVisible}
+              onDismiss={() => setRoleModalVisible(false)}
+              contentContainerStyle={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Select Role</Text>
+              {['Admin', 'User'].map(item => (
+                <TouchableOpacity
+                  key={item}
+                  onPress={() => {
+                    setRole(item);
+                    setRoleModalVisible(false);
+                  }}
+                  style={styles.modalItem}>
+                  <Text style={styles.modalItemText}>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </Modal>
+          </Portal>
+
+          <TextInput
+            label="Emergency Contact"
+            value={emergencyContact}
+            onChangeText={setEmergencyContact}
+            style={styles.input}
+          />
+
+          <Text style={styles.sectionTitle}>Access Control</Text>
+
+          <View style={styles.checkboxRow}>
+            <View style={styles.checkboxItem}>
+              <CheckBox value={checkAll} onValueChange={toggleAll} />
+              <Text style={styles.checkboxLabel}>Check All</Text>
+            </View>
+          </View>
+
+          <View style={styles.facilitiesWrapper}>
+            {facilitiesList.map((item, index) => (
+              <View key={index} style={styles.checkboxItem}>
+                <CheckBox
+                  value={selectedFacilities.includes(item)}
+                  onValueChange={() => toggleFacility(item)}
+                />
+                <Text style={styles.checkboxLabel}>{item}</Text>
+              </View>
+            ))}
+          </View>
+
+          <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+            <Text style={styles.saveBtnText}>Save</Text>
+          </TouchableOpacity>
+        </View>
+        
+      </ScrollView>
+    </PaperProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 24,
+    backgroundColor: '#F9F9F9',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#ccc',
+    marginVertical: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#75AB38',
+    marginVertical: 10,
+  },
+  input: {
+    padding: 0,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    marginBottom: 10,
+  },
+  imageContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  roundImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: '#75AB38',
+  },
+  iconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  genderSelector: {
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    marginBottom: 10,
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    margin: 20,
+    borderRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalItem: {
+    paddingVertical: 12,
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
+  },
+  modalItemText: {
+    fontSize: 16,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  checkboxItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '45%',
+    marginVertical: 6,
+  },
+  checkboxLabel: {
+    marginLeft: 6,
+    fontSize: 14,
+  },
+  facilitiesWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  saveBtn: {
+    backgroundColor: '#75AB38',
+    paddingVertical: 14,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  saveBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});

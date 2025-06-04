@@ -13,6 +13,10 @@ import InActiveTenants from './src/screens/InActiveTenants';
 import Rooms from './src/screens/Rooms';
 import Amount from './src/screens/Amount';
 import Attendence from './src/screens/Attendence';
+import AddRoom from './src/screens/AddRoom';
+import AddTenant from './src/screens/AddTenant';
+import AddStaff from './src/screens/AddStaff';
+import ActiveTenantReport from './src/screens/ActiveTenantReport';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +33,10 @@ export default function App() {
         <Stack.Screen name="Rooms" component={Rooms}  options={{ headerShown: false }}/>
         <Stack.Screen name="Payments" component={Amount}  options={{ headerShown: false }}/>
         <Stack.Screen name="Attendance" component={Attendence}  options={{ headerShown: false }}/>
+        <Stack.Screen name="AddRoom" component={AddRoom}  options={{ headerShown: false }}/>
+        <Stack.Screen name="AddTenant" component={AddTenant}  options={{ headerShown: false }}/>
+        <Stack.Screen name="AddStaff" component={AddStaff}  options={{ headerShown: false }}/>
+        <Stack.Screen name="ActiveTenantReport" component={ActiveTenantReport}  options={{ headerShown: false }}/>
         <Stack.Screen
           name="Dashboard"
           component={DashboardTabs}

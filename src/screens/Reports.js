@@ -10,6 +10,7 @@ import {
 import React from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import { useNavigation } from '@react-navigation/native';
 
 const ReportCard = ({user, onView, onDelete}) => (
   <View style={styles.card2} key={user.id}>
@@ -32,6 +33,7 @@ const ReportCard = ({user, onView, onDelete}) => (
 );
 
 export default function Reports() {
+  const navigation = useNavigation()
   const handleView = user => {
     console.log('View:', user);
   };
@@ -41,7 +43,7 @@ export default function Reports() {
   };
 
   const reports = [
-    {label: 'Assets Reports', count: 1, icon: 'file-text-o'},
+    {label: 'Assets Reports', count: 1, icon: 'file-text-o' , comp:'ActiveTenantReport'},
     {label: 'Active Tenants Reports', count: 2, icon: 'file-text-o'},
     {label: 'Inactive Tenants Reports', count: 10, icon: 'file-text-o'},
     {label: 'Profit and Loss Report', count: 3, icon: 'file-text-o'},
@@ -75,7 +77,7 @@ export default function Reports() {
         <View style={styles.separator} />
         <View style={styles.cardList}>
           {reports.map((item, index) => (
-            <TouchableOpacity key={index} style={styles.card}>
+            <TouchableOpacity onPress={()=>navigation.navigate('ActiveTenantReport')} key={index} style={styles.card}>
               <View style={styles.iconWrapper}>
                 <View style={styles.icons}>
                   <FontAwesome name={item.icon} size={15} color="#fff" />

@@ -5,16 +5,20 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import React from 'react';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import {useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 
 const RoomCard = ({user, onView, onDelete}) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
-        <Text>👤</Text>
+        <Image
+          source={{uri: 'https://www.w3schools.com/w3images/avatar6.png'}}
+          style={styles.avatar}
+        />{' '}
       </View>
       <View style={styles.infoBox}>
         <Text>Floor No. {user.floorName}</Text>
@@ -43,6 +47,7 @@ const RoomCard = ({user, onView, onDelete}) => (
   </View>
 );
 export default function Rooms() {
+  const navigation = useNavigation();
   const route = useRoute();
   const {data} = route.params;
 
@@ -60,6 +65,7 @@ export default function Rooms() {
         <View style={styles.titleRow}>
           <Text style={styles.title}>Rooms</Text>
           <TouchableOpacity
+            onPress={() => navigation.navigate('AddRoom')}
             style={styles.topIcon}>
             <AntDesign name="adduser" size={22} color="#fff" />
           </TouchableOpacity>
@@ -106,12 +112,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sideBox: {
-    width: '20%',
+    width: '30%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   infoBox: {
-    width: '80%',
+    width: '70%',
   },
   name: {
     fontSize: 18,
@@ -166,10 +172,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8d7da',
     color: '#721c24',
   },
-   topIcon: {
+  topIcon: {
     paddingVertical: 6,
     paddingHorizontal: 15,
     backgroundColor: '#75AB38',
     borderRadius: 10,
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ccc',
   },
 });

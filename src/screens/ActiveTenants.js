@@ -5,16 +5,23 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import React from 'react';
+import React, { use } from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 const TenantCard = ({user, onView, onDelete}) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
-        <Text>👤</Text>
+      <Image
+        source={{ uri: 'https://www.w3schools.com/w3images/avatar6.png' }}
+        style={styles.avatar}
+      />
+
       </View>
+
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user.name}</Text>
         <Text>Phone: {user.phone}</Text>
@@ -36,10 +43,12 @@ const TenantCard = ({user, onView, onDelete}) => (
 );
 
 export default function ActiveTenants() {
+
+  const navigation = useNavigation();
   const ActiveTenant = [
     {
       id: '1',
-      image: '',
+      // image: 'https://avatar.iran.liara.run/public/boy?username=Ash',
       name: 'Henry',
       gender: 'female',
       phone: '+92 300 1234567',
@@ -68,7 +77,7 @@ export default function ActiveTenants() {
       <View style={styles.container}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Active Tenants</Text>
-          <TouchableOpacity style={styles.topIcon}>
+          <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
             <AntDesign name="adduser" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -118,12 +127,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sideBox: {
-    width: '20%',
+    width: '30%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   infoBox: {
-    width: '80%',
+    width: '70%',
   },
   name: {
     fontSize: 18,
@@ -184,6 +193,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#75AB38',
     borderRadius: 10,
   },
+  avatar: {
+  width: 60,
+  height: 60,
+  borderRadius: 30,
+  backgroundColor: '#ccc',
+},
+
 });
 
 // import * as React from 'react';

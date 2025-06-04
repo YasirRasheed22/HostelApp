@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import React from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 const StaffCard = ({user, onView, onDelete}) => (
   <View style={styles.card}>
@@ -36,6 +37,7 @@ const StaffCard = ({user, onView, onDelete}) => (
 );
 
 export default function StaffMember() {
+  const navigation = useNavigation()
   const staffmember = [
     {
       id: '1',
@@ -66,7 +68,7 @@ export default function StaffMember() {
       <View style={styles.container}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Staff Members</Text>
-          <TouchableOpacity style={styles.topIcon}>
+          <TouchableOpacity onPress={()=>navigation.navigate('AddStaff')} style={styles.topIcon}>
             <AntDesign name="adduser" size={22} color="#fff" />
           </TouchableOpacity>
         </View>

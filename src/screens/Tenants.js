@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import React, {useState} from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 const UserCard = ({user, toggleStatus, onView, onDelete}) => (
   <View style={styles.card}>
@@ -49,6 +50,7 @@ const UserCard = ({user, toggleStatus, onView, onDelete}) => (
 );
 
 export default function Tenants() {
+  const navigation = useNavigation();
   const [users, setUsers] = useState([
     {
       id: '1',
@@ -112,7 +114,7 @@ export default function Tenants() {
       <View style={styles.container}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Tenants</Text>
-          <TouchableOpacity style={styles.topIcon}>
+          <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
             <AntDesign name="adduser" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
