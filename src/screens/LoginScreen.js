@@ -8,9 +8,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ApiUrl } from '../../config/services';
 
 
 const LoginScreen = () => {
@@ -18,13 +23,28 @@ const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // if (email && password) {
-      navigation.navigate('Dashboard');
-    // } else {
-      // Alert.alert('Please fill in all fields');
-    // }
+  const handleLogin = async () => {
+  const payload = {
+    email: email,
+    password: password,
   };
+
+  if (email && password) {
+    try {
+      console.log(payload);
+      const response = await axios.post(`${ApiUrl}/api/helper/login`, payload);
+      AsyncStorage.setItem("db_name", (response.data.user.db_name));
+      console.log("Database Name .............." , response.data.user.db_name)
+      navigation.navigate('Dashboard');
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Login failed", error.response?.data?.message || error.message);
+    }
+  } else {
+    Alert.alert('Please fill in all fields');
+  }
+};
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -83,13 +103,15 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 25,
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     color: '#333',
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
+    fontFamily:font.primary,
     marginBottom: 20,
   },
   input: {
@@ -110,14 +132,15 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     fontSize: 16,
+    fontFamily:font.secondary,
   },
   linkText: {
     color: '#4f46e5',
     textAlign: 'center',
     marginTop: 10,
-    fontWeight: '600',
+    fontFamily:font.secondary,
   },
     safeArea: {
     flex: 1,

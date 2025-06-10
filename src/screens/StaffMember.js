@@ -5,16 +5,21 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
 
 const StaffCard = ({user, onView, onDelete}) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
-        <Text>👤</Text>
+        <Image
+         source={{ uri: 'https://www.w3schools.com/w3images/avatar6.png' }}
+         style={styles.avatar}
+        />
       </View>
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user.name}</Text>
@@ -37,7 +42,18 @@ const StaffCard = ({user, onView, onDelete}) => (
 );
 
 export default function StaffMember() {
-  const navigation = useNavigation()
+  const navigation = useNavigation();
+   navigation.setOptions({
+    headerTitle: 'Staff Members',
+     headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+     headerRight:()=>{
+             return(
+              <TouchableOpacity onPress={()=>navigation.navigate('AddStaff')} style={styles.topIcon}>
+            <AntDesign name="adduser" size={22} color="#fff" />
+          </TouchableOpacity>
+             );
+     }
+  })
   const staffmember = [
     {
       id: '1',
@@ -66,13 +82,11 @@ export default function StaffMember() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <View style={styles.titleRow}>
+        {/* <View style={styles.titleRow}>
           <Text style={styles.title}>Staff Members</Text>
-          <TouchableOpacity onPress={()=>navigation.navigate('AddStaff')} style={styles.topIcon}>
-            <AntDesign name="adduser" size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.separator} />
+          
+        </View> */}
+        {/* <View style={styles.separator} /> */}
         <FlatList
           data={staffmember}
           keyExtractor={item => item.id}
@@ -91,9 +105,10 @@ export default function StaffMember() {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 28,
+    fontSize: 25,
     marginBottom: 10,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
   },
   separator: {
     height: 1,
@@ -118,16 +133,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sideBox: {
-    width: '20%',
+    width: '30%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   infoBox: {
-    width: '80%',
+    width: '70%',
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -150,7 +166,8 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
   },
   safeArea: {
     flex: 1,
@@ -164,7 +181,8 @@ const styles = StyleSheet.create({
   },
   status: {
     marginTop: 6,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
@@ -184,4 +202,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#75AB38',
     borderRadius: 10,
   },
+   avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ccc',
+  },
 });
+

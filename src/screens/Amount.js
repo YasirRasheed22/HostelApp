@@ -5,16 +5,21 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import React from 'react';
 // import AntDesign from 'react-native-vector-icons/AntDesign';
-import {useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
 
 const PaymentCard = ({user, onView, onDelete}) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
-        <Text>👤</Text>
+       <Image
+         source={{ uri: 'https://www.w3schools.com/w3images/avatar6.png' }}
+         style={styles.avatar}
+       />
       </View>
       <View style={styles.infoBox}>
         <Text>{user.name}</Text>
@@ -44,8 +49,26 @@ const PaymentCard = ({user, onView, onDelete}) => (
 );
 
 export default function Amount() {
+  const navigation = useNavigation();
   const route = useRoute();
   const {data} = route.params;
+
+   navigation.setOptions({
+      headerTitle: 'Payments',
+       headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+      //  headerRight:()=>{
+      //          return(
+      //            <View style={{ flexDirection: 'row' }}>
+      //           <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+      //               <AntDesign name="retweet" size={22} color="#fff" />
+      //             </TouchableOpacity>
+      //           <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+      //             <AntDesign name="adduser" size={22} color="#fff" />
+      //           </TouchableOpacity>
+      //           </View>
+      //          );
+      //  }
+    })
 
   const handleView = user => {
     console.log('View:', user);
@@ -84,9 +107,10 @@ export default function Amount() {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 28,
+    fontSize: 25,
     marginBottom: 10,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
   separator: {
     height: 1,
@@ -111,16 +135,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sideBox: {
-    width: '20%',
+    width: '30%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   infoBox: {
-    width: '80%',
+    width: '70%',
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -143,7 +168,8 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
   safeArea: {
     flex: 1,
@@ -157,7 +183,8 @@ const styles = StyleSheet.create({
   },
   status: {
     marginTop: 6,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
@@ -176,5 +203,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: '#75AB38',
     borderRadius: 10,
+  },
+   avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ccc',
   },
 });

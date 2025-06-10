@@ -9,8 +9,23 @@ import {
 import React from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import { font } from '../components/ThemeStyle';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Attendence() {
+  const navigation = useNavigation();
+
+   navigation.setOptions({
+      headerTitle: 'Attendence',
+       headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+       headerRight:()=>{
+               return(
+                <TouchableOpacity>
+            <AntDesign name="addfile" size={28} color="#4E4E5F" />
+               </TouchableOpacity>
+               );
+       }
+    })
   const reports = [
     {label: 'Total', count: 1, icon: 'file-text-o'},
     {label: 'In', count: 2, icon: 'file-text-o'},
@@ -20,13 +35,13 @@ export default function Attendence() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.titleRow}>
+        {/* <View style={styles.titleRow}>
           <Text style={styles.title}>Attendence</Text>
           <TouchableOpacity>
             <AntDesign name="addfile" size={28} color="#4E4E5F" />
           </TouchableOpacity>
-        </View>
-        <View style={styles.separator}/>
+        </View> */}
+        {/* <View style={styles.separator}/> */}
         <View style={styles.cardList}>
           {reports.map((item, index) => (
             <TouchableOpacity key={index} style={styles.card}>
@@ -55,20 +70,23 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 25,
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
   subtitle: {
     fontSize: 25,
     marginTop: 10,
     color: '#4E4E5F',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
   subheading: {
     fontSize: 18,
     marginTop: 5,
     color: '#4E4E5F',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary
   },
   separator: {
     height: 1,
@@ -78,7 +96,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginTop: 10,
     marginBottom: 10,
     color: '#4E4E5F',
@@ -116,12 +135,14 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: '#7CB33D',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily:font.secondary,
+    // fontWeight: '600',
   },
   cardCount: {
     color: '#7CB33D',
     fontSize: 13,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginTop: 4,
   },
   icons: {
@@ -142,7 +163,8 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -165,7 +187,8 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
   card2: {
     backgroundColor: '#fff',

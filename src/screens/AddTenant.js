@@ -20,6 +20,11 @@ import {
   Portal,
   TextInput,
 } from 'react-native-paper';
+import { font } from '../components/ThemeStyle';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ApiUrl } from '../../config/services';
+import axios from 'axios';
 
 export default function AddTenant() {
   const [name, setName] = useState('');
@@ -35,6 +40,10 @@ export default function AddTenant() {
   const [cnic1, setCnic1] = useState('');
   const [relation, setRelation] = useState('');
   const [phone1, setPhone1] = useState('');
+  const [roomRent , setRoomRent] = useState('')
+  const [messTitle , setMessTitle] = useState('')
+  const [messPrice , setMessPrice] = useState('')
+  const [messStatus , setMessStatus] = useState('no')
 
   const [gender, setGender] = useState(null);
   const [genderModalVisible, setGenderModalVisible] = useState(false);
@@ -55,10 +64,28 @@ export default function AddTenant() {
   const [state, setState] = useState('');
   const [occupationAddress, setOccupationAddress] = useState('');
   const [properties, setProperties] = useState([]);
+  const navigation = useNavigation();
 
   const handleAddProperty = () => {
     setProperties([...properties, '']);
   };
+
+   navigation.setOptions({
+      headerTitle: 'Add Tenants',
+       headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+    //    headerRight:()=>{
+    //            return(
+    //              <View style={{ flexDirection: 'row' }}>
+    //             <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+    //                 <AntDesign name="retweet" size={22} color="#fff" />
+    //               </TouchableOpacity>
+    //             <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+    //               <AntDesign name="adduser" size={22} color="#fff" />
+    //             </TouchableOpacity>
+    //             </View>
+    //            );
+    //    }
+    })
 
   const handlePropertyChange = (text, index) => {
     const updated = [...properties];
@@ -114,11 +141,53 @@ export default function AddTenant() {
     });
   };
 
+ const handleSubmit = async () => {
+  const db = await AsyncStorage.getItem('db_name');
+
+  const formData = new FormData();
+
+  formData.append('name', name);
+  formData.append('phone', phone);
+  formData.append('cnic', cnic);
+  formData.append('email', email);
+  formData.append('dob', birthDate.toString());
+  formData.append('gender', gender.toString());
+  formData.append('securityFees', securityFee);
+  formData.append('marital_status', maritalStatus.toString());
+  formData.append('permanent_address', permanentAddress);
+  formData.append('db_name', db);
+  formData.append('state', state);
+  formData.append('job_title', jobTitle.toString());
+  formData.append('job_location', occupationAddress);
+  formData.append('paymentCycleDate', paymentDate);
+  formData.append('rentForRoom', roomRent);
+  formData.append('roomId', room.toString());
+  formData.append('mess_status',messStatus);
+  formData.append('mess_title', messTitle);
+  formData.append('mess_price',  messPrice);
+
+  // For array fields like `guardians`, stringify them if backend expects JSON string
+  formData.append('guardians', JSON.stringify([]));
+
+  try {
+    const response = await axios.post(`${ApiUrl}/api/tenants/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    console.log('API response', response.data);
+  } catch (error) {
+    console.log('Error:', error.message);
+  }
+};
+
+
   return (
     <PaperProvider>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Add Tenant</Text>
-        <View style={styles.separator} />
+        {/* <Text style={styles.title}>Add Tenant</Text> */}
+        {/* <View style={styles.separator} /> */}
 
         <Text style={styles.sectionTitle}>Personal Information</Text>
 
@@ -140,39 +209,51 @@ export default function AddTenant() {
             value={name}
             onChangeText={setName}
             style={styles.input}
+            underlineColor="transparent"
+
           />
           <TextInput
             label="CNIC/B-FORM"
             value={cnic}
             onChangeText={setCnic}
             style={styles.input}
+            underlineColor="transparent"
           />
           <TextInput
             label="Phone No"
             value={phone}
             onChangeText={setPhone}
             style={styles.input}
+            underlineColor="transparent"
           />
           <TextInput
             label="E-Mail"
             value={email}
             onChangeText={setEmail}
             style={styles.input}
+            underlineColor="transparent"
           />
           <TextInput
             label="Security Fee"
             value={securityFee}
             onChangeText={setSecurityFee}
             style={styles.input}
+            underlineColor="transparent"
           />
 
           <TouchableOpacity
             onPress={() => setShowDatePicker(true)}
-            style={styles.dropdown}>
-            <Text style={{color: birthDate ? '#000' : '#888'}}>
-              {birthDate ? birthDate.toDateString() : 'Choose Date'}
+            style={styles.field}
+          >
+            <Text style={styles.fieldText}>
+              {birthDate
+                ? `${birthDate.getDate().toString().padStart(2, '0')}-${(birthDate.getMonth() + 1)
+                    .toString()
+                    .padStart(2, '0')}-${birthDate.getFullYear()}`
+                : 'Choose Date'}
             </Text>
           </TouchableOpacity>
+
           {showDatePicker && (
             <DateTimePicker
               value={birthDate || new Date()}
@@ -185,11 +266,12 @@ export default function AddTenant() {
             />
           )}
 
+
           {/* GENDER MODAL */}
           <TouchableOpacity
             onPress={() => setGenderModalVisible(true)}
-            style={styles.genderSelector}>
-            <Text style={{color: gender ? '#000' : '#888'}}>
+            style={styles.field}>
+            <Text style={styles.fieldText}>
               {gender || 'Select Gender'}
             </Text>
           </TouchableOpacity>
@@ -199,7 +281,7 @@ export default function AddTenant() {
               onDismiss={() => setGenderModalVisible(false)}
               contentContainerStyle={styles.modalContainer}>
               <Text style={styles.modalTitle}>Select Gender</Text>
-              {['Male', 'Female', 'Other'].map(item => (
+              {['male', 'female', 'other'].map(item => (
                 <TouchableOpacity
                   key={item}
                   onPress={() => {
@@ -216,8 +298,8 @@ export default function AddTenant() {
           {/* Marital Status */}
           <TouchableOpacity
             onPress={() => setMaritalModalVisible(true)}
-            style={styles.genderSelector}>
-            <Text style={{color: maritalStatus ? '#000' : '#888'}}>
+            style={styles.field}>
+            <Text style={styles.fieldText}>
               {maritalStatus || 'Select Marital Status'}
             </Text>
           </TouchableOpacity>
@@ -227,7 +309,7 @@ export default function AddTenant() {
               onDismiss={() => setMaritalModalVisible(false)}
               contentContainerStyle={styles.modalContainer}>
               <Text style={styles.modalTitle}>Select Marital Status</Text>
-              {['Married', 'Single'].map(item => (
+              {['married', 'single'].map(item => (
                 <TouchableOpacity
                   key={item}
                   onPress={() => {
@@ -247,19 +329,21 @@ export default function AddTenant() {
             value={permanentAddress}
             onChangeText={setPermanentAddress}
             style={styles.input}
+            underlineColor="transparent"
           />
           <TextInput
             label="State"
             value={state}
             onChangeText={setState}
             style={styles.input}
+            underlineColor="transparent"
           />
 
           <Text style={styles.sectionTitle}>Occupation Information</Text>
           <TouchableOpacity
             onPress={() => setJobModalVisible(true)}
-            style={styles.genderSelector}>
-            <Text style={{color: jobTitle ? '#000' : '#888'}}>
+            style={styles.field}>
+            <Text style={styles.fieldText}>
               {jobTitle || 'Select Job Title'}
             </Text>
           </TouchableOpacity>
@@ -269,7 +353,7 @@ export default function AddTenant() {
               onDismiss={() => setJobModalVisible(false)}
               contentContainerStyle={styles.modalContainer}>
               <Text style={styles.modalTitle}>Select Job Title</Text>
-              {['Student', 'Teacher'].map(item => (
+              {['student', 'teacher'].map(item => (
                 <TouchableOpacity
                   key={item}
                   onPress={() => {
@@ -287,13 +371,14 @@ export default function AddTenant() {
             value={occupationAddress}
             onChangeText={setOccupationAddress}
             style={styles.input}
+            underlineColor="transparent"
           />
 
           <Text style={styles.sectionTitle}>Room Information</Text>
           <TouchableOpacity
             onPress={() => setRoomModalVisible(true)}
-            style={styles.genderSelector}>
-            <Text style={{color: room ? '#000' : '#888'}}>
+            style={styles.field}>
+            <Text style={styles.fieldText}>
               {room || 'Select Room'}
             </Text>
           </TouchableOpacity>
@@ -303,7 +388,7 @@ export default function AddTenant() {
               onDismiss={() => setRoomModalVisible(false)}
               contentContainerStyle={styles.modalContainer}>
               <Text style={styles.modalTitle}>Select Room</Text>
-              {['B-86', 'A-25'].map(item => (
+              {['1', '2'].map(item => (
                 <TouchableOpacity
                   key={item}
                   onPress={() => {
@@ -319,8 +404,8 @@ export default function AddTenant() {
 
           <TouchableOpacity
             onPress={() => setPaymentDateModalVisible(true)}
-            style={styles.genderSelector}>
-            <Text style={{color: paymentDate ? '#000' : '#888'}}>
+            style={styles.field}>
+            <Text style={styles.fieldText}>
               {paymentDate || 'Select Payment Date'}
             </Text>
           </TouchableOpacity>
@@ -346,9 +431,10 @@ export default function AddTenant() {
 
           <TextInput
             label="Room Rent"
-            value={securityFee}
-            onChangeText={setSecurityFee}
+            value={roomRent}
+            onChangeText={setRoomRent}
             style={styles.input}
+            underlineColor="transparent"
           />
 
           <Text style={styles.sectionTitle}>Guardian Information</Text>
@@ -371,6 +457,7 @@ export default function AddTenant() {
                 value={fullName}
                 onChangeText={setFullName}
                 style={styles.input}
+                underlineColor="transparent"
               />
 
               <TextInput
@@ -379,6 +466,7 @@ export default function AddTenant() {
                 onChangeText={setCnic1}
                 style={styles.input}
                 keyboardType="numeric"
+                underlineColor="transparent"
               />
 
               <TextInput
@@ -386,6 +474,7 @@ export default function AddTenant() {
                 value={relation}
                 onChangeText={setRelation}
                 style={styles.input}
+                underlineColor="transparent"
               />
 
               <TextInput
@@ -394,6 +483,7 @@ export default function AddTenant() {
                 onChangeText={setPhone1}
                 style={styles.input}
                 keyboardType="phone-pad"
+                underlineColor="transparent"
               />
 
               <View style={styles.buttonRow}>
@@ -412,22 +502,42 @@ export default function AddTenant() {
           </Portal>
 
           <Text style={styles.sectionTitle}>Mess Information</Text>
-          <Button style={styles.button} mode="contained">
-            YES
-          </Button>
-          <Button style={styles.button2} mode="outlined">
-            NO
-          </Button>
+         <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity style={styles.button1} onPress={() => {setMessStatus('yes')}}>
+            <Text style={{ color: 'white' }}>YES</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button2} onPress={() => {setMessStatus('no')}}>
+            <Text style={{ color: 'black' }}>NO</Text>
+          </TouchableOpacity>
+        </View>
+        {messStatus === 'yes' ? (
+            <>
+              <TextInput
+                label="Mess Title"
+                value={messTitle}
+                onChangeText={setMessTitle}
+                style={styles.input}
+                underlineColor="transparent"
+              />
+              <TextInput
+                label="Mess Price"
+                value={messPrice}
+                onChangeText={setMessPrice}
+                style={styles.input}
+                underlineColor="transparent"
+              />
+            </>
+          ) : (
+            // Optional: render something else when messStatus is false
+            null 
+          )}
 
           <Text style={styles.sectionTitle}>Property Information</Text>
-          <View style={{ alignItems: 'flex-end', marginBottom: 17 }}>
-            <Button
-                style={styles.button3}
-                mode="outlined"
-                onPress={handleAddProperty}>
-                Add +
-            </Button>
-            </View>
+         <View style={{ alignItems: 'flex-end', marginBottom: 17 }}>
+            <TouchableOpacity style={styles.button3} onPress={handleAddProperty}>
+              <Text style={styles.buttonText}>Add +</Text>
+            </TouchableOpacity>
+          </View>
 
           {properties.map((property, index) => (
             <View key={index} style={styles.propertyItem}>
@@ -436,6 +546,7 @@ export default function AddTenant() {
                 value={property}
                 onChangeText={text => handlePropertyChange(text, index)}
                 style={[styles.input, {flex: 1}]}
+                underlineColor="transparent"
               />
               <TouchableOpacity
                 onPress={() => handleRemoveProperty(index)}
@@ -445,7 +556,7 @@ export default function AddTenant() {
             </View>
           ))}
         </View>
-        <TouchableOpacity style={styles.saveBtn}>
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSubmit}>
             <Text style={styles.saveBtnText}>Save</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -459,8 +570,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 25,
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginBottom: 10,
   },
   separator: {
@@ -470,7 +582,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     color: '#75AB38',
     marginVertical: 10,
   },
@@ -478,6 +591,7 @@ const styles = StyleSheet.create({
     padding: 0,
     borderWidth: 1,
     borderColor: '#ccc',
+    // fontFamily:font.primary,
     borderRadius: 8,
     backgroundColor: '#fff',
     marginBottom: 10,
@@ -526,7 +640,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginBottom: 10,
   },
   modalItem: {
@@ -536,6 +651,7 @@ const styles = StyleSheet.create({
   },
   modalItemText: {
     fontSize: 16,
+    fontFamily:font.primary,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -544,18 +660,35 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#75AB38',
+    // padding:10,
+    // width:'30%',
+    // alignItems:'center',
+    borderRadius: 10,
+  },
+  button1: {
+    backgroundColor: '#75AB38',
+    padding:10,
+    width:'30%',
+    alignItems:'center',
     borderRadius: 10,
   },
   button3: {
     backgroundColor: '#75AB38',
     width:'40%',
     borderRadius:10,
+     padding:10,
+     alignItems:'center'
 
   },
-  button2: {
-    borderRadius: 10,
-    // border:'#75AB38',
-  },
+button2: {
+  padding: 10,
+  width: '30%',
+  alignItems: 'center',
+  borderRadius: 10,
+  borderWidth: 1,             // ✅ Correct way to add border
+  borderColor: '#75AB38',     // ✅ Set your desired border color
+}
+,
   propertyItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -581,6 +714,25 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
+    field: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+    height: 60, // Uniform height
+    justifyContent: 'center',
+  },
+  fieldText: {
+    color: '#333',
+    fontSize:16,
+  },
+  buttonText:{
+    color:'#fff'
+  }
 });

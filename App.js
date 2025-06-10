@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './src/screens/LoginScreen';
@@ -17,26 +17,44 @@ import AddRoom from './src/screens/AddRoom';
 import AddTenant from './src/screens/AddTenant';
 import AddStaff from './src/screens/AddStaff';
 import ActiveTenantReport from './src/screens/ActiveTenantReport';
+import InActiveTenantReport from './src/screens/InActiveTenantReport';
+import AssetReport from './src/screens/AssetReport';
+import ProfitAndLossReport from './src/screens/ProfitAndLossReport';
+import { font } from './src/components/ThemeStyle';
+import TenentView from './src/screens/TenentView';
+// import Orientation from 'react-native-orientation-locker';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+
+  
+// useEffect(() => {
+//   Orientation.lockToPortrait();
+// }, []);
+
+
+
   return (
     <PaperProvider>
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen  name="Login" component={LoginScreen}  options={{ headerShown: false }}/>
         <Stack.Screen name="Register" component={RegisterScreen}  options={{ headerShown: false }} />
-        <Stack.Screen name="StaffMember" component={StaffMember}  options={{ headerShown: false }}/>
-        <Stack.Screen name="ActiveMember" component={ActiveTenants}  options={{ headerShown: false }}/>
-        <Stack.Screen name="InactiveMember" component={InActiveTenants}  options={{ headerShown: false }}/>
-        <Stack.Screen name="Rooms" component={Rooms}  options={{ headerShown: false }}/>
-        <Stack.Screen name="Payments" component={Amount}  options={{ headerShown: false }}/>
-        <Stack.Screen name="Attendance" component={Attendence}  options={{ headerShown: false }}/>
-        <Stack.Screen name="AddRoom" component={AddRoom}  options={{ headerShown: false }}/>
-        <Stack.Screen name="AddTenant" component={AddTenant}  options={{ headerShown: false }}/>
-        <Stack.Screen name="AddStaff" component={AddStaff}  options={{ headerShown: false }}/>
-        <Stack.Screen name="ActiveTenantReport" component={ActiveTenantReport}  options={{ headerShown: false }}/>
+        <Stack.Screen name="StaffMember" component={StaffMember}  options={{ headerShown: true }}/>
+        <Stack.Screen name="ActiveMember" component={ActiveTenants}  options={{ headerShown: true }}/>
+        <Stack.Screen name="InactiveMember" component={InActiveTenants}  options={{ headerShown: true  }}/>
+        <Stack.Screen name="Rooms" component={Rooms}  options={{ headerShown: true }}/>
+        <Stack.Screen name="Payments" component={Amount}  options={{ headerShown: true }}/>
+        <Stack.Screen name="Attendance" component={Attendence}  options={{ headerShown: true }}/>
+        <Stack.Screen name="AddRoom" component={AddRoom}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="AddTenant" component={AddTenant}  options={{ headerShown: true,  headerTitleStyle: {fontFamily: font.secondary,fontSize: 20}}}/>
+        <Stack.Screen name="AddStaff" component={AddStaff}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="ActiveTenantReport" component={ActiveTenantReport}  options={{ headerShown: true }}/>
+        <Stack.Screen name="InActiveTenantReport" component={InActiveTenantReport}  options={{ headerShown: true }}/>
+        <Stack.Screen name="AssetReport" component={AssetReport}  options={{ headerShown: true }}/>
+        <Stack.Screen name="ProfitAndLossReport" component={ProfitAndLossReport}  options={{ headerShown: true }}/>
+        <Stack.Screen name="TenantView" component={TenentView}  options={{ headerShown: true }}/>
         <Stack.Screen
           name="Dashboard"
           component={DashboardTabs}

@@ -6,16 +6,25 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import { useNavigation } from '@react-navigation/native';
+import Orientation from 'react-native-orientation-locker';
+import { font } from '../components/ThemeStyle';
+import axios from 'axios';
+import { ApiUrl } from '../../config/services';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const UserCard = ({user, toggleStatus, onView, onDelete}) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
-        <Text>👤</Text>
+        <Image
+         source={{ uri: 'https://www.w3schools.com/w3images/avatar6.png' }}
+         style={styles.avatar}
+        />
       </View>
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user.name}</Text>
@@ -50,30 +59,67 @@ const UserCard = ({user, toggleStatus, onView, onDelete}) => (
 );
 
 export default function Tenants() {
+
+  useEffect(()=>{
+   fetchTenants();
+  },[db_name])
+
+
+
+const fetchTenants = async () => {
+  try {
+    const db_name = await AsyncStorage.getItem('db_name');
+    setdb(db_name);
+
+    const payload = {
+      db_name: db_name,
+    };
+
+    const response = await axios.put(`${ApiUrl}/api/tenants/`, payload);
+    console.log('API Response:', response.data.data);
+
+    // Transform data to match users state structure
+    const transformedUsers = response.data.data.map((tenant) => ({
+      id: tenant.id.toString(), // convert to string if needed
+      name: tenant.name,
+      gender: tenant.gender,
+      phone: tenant.phone,
+      room: tenant.room ? tenant.room.name : '', // handle possible null
+      rent: tenant.rentForRoom.toString(),
+      status: tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1), // e.g., "active" -> "Active"
+    }));
+
+    setUsers(transformedUsers);
+  } catch (error) {
+    console.error('Error fetching tenants:', error);
+  }
+};
+
+
+
+
   const navigation = useNavigation();
-  const [users, setUsers] = useState([
-    {
-      id: '1',
-      name: 'Imran Shahid',
-      gender: 'Male',
-      phone: '+92 300 1234567',
-      room: '12',
-      rent: '12000',
-      status: 'Active',
-    },
-    {
-      id: '2',
-      name: 'Ali Khan',
-      gender: 'Male',
-      phone: '+92 300 7654321',
-      room: '15',
-      rent: '10000',
-      status: 'Inactive',
-    },
-  ]);
+
+  const [isTableView , setTableView] = useState(false);
+  const [page , setPage] = useState(0);
+  const [db_name,setdb] = useState('')
+  const [users, setUsers] = useState('');
+
+  const ToggleView = () =>{
+    setTableView((prev) => {
+      if(!isTableView)
+      {
+        Orientation.lockToLandscape()
+      }
+      else{
+        Orientation.lockToPortrait()
+      }
+    })
+  }
 
   const handleView = user => {
     console.log('View:', user);
+    navigation.navigate('TenantView' , {id:'1'})
   };
 
   const handleDelete = id => {
@@ -114,9 +160,12 @@ export default function Tenants() {
       <View style={styles.container}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Tenants</Text>
+          <View>
+
           <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
             <AntDesign name="adduser" size={22} color="#fff" />
           </TouchableOpacity>
+          </View>
         </View>
         <View style={styles.separator} />
         <FlatList
@@ -138,9 +187,10 @@ export default function Tenants() {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 28,
+    fontSize: 25,
     marginBottom: 10,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
   },
   separator: {
     height: 1,
@@ -165,16 +215,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sideBox: {
-    width: '20%',
+    width: '30%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   infoBox: {
-    width: '80%',
+    width: '70%',
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -197,7 +248,8 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
   },
   safeArea: {
     flex: 1,
@@ -211,7 +263,8 @@ const styles = StyleSheet.create({
   },
   status: {
     marginTop: 6,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
@@ -230,5 +283,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: '#75AB38',
     borderRadius: 10,
+  },
+     avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ccc',
   },
 });

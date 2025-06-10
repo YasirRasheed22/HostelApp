@@ -1,3 +1,5 @@
+// ActiveTenants.js
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,22 +8,24 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Dimensions,
 } from 'react-native';
+import { DataTable } from 'react-native-paper';
+import Orientation from 'react-native-orientation-locker';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import React, { use } from 'react';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
 
-const TenantCard = ({user, onView, onDelete}) => (
+const TenantCard = ({ user, onView, onDelete }) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
-      <Image
-        source={{ uri: 'https://www.w3schools.com/w3images/avatar6.png' }}
-        style={styles.avatar}
-      />
-
+        <Image
+          source={{ uri: 'https://www.w3schools.com/w3images/avatar6.png' }}
+          style={styles.avatar}
+        />
       </View>
-
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user.name}</Text>
         <Text>Phone: {user.phone}</Text>
@@ -33,9 +37,7 @@ const TenantCard = ({user, onView, onDelete}) => (
       <TouchableOpacity onPress={() => onView(user)} style={styles.viewBtn}>
         <Text style={styles.btnText}>View</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => onDelete(user.id)}
-        style={styles.deleteBtn}>
+      <TouchableOpacity onPress={() => onDelete(user.id)} style={styles.deleteBtn}>
         <Text style={styles.btnText}>Delete</Text>
       </TouchableOpacity>
     </View>
@@ -43,77 +45,154 @@ const TenantCard = ({user, onView, onDelete}) => (
 );
 
 export default function ActiveTenants() {
-
   const navigation = useNavigation();
-  const ActiveTenant = [
+   navigation.setOptions({
+      headerTitle: 'Active Tenants',
+       headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+       headerRight:()=>{
+               return(
+                 <View style={{ flexDirection: 'row' }}>
+                <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+                    <AntDesign name="retweet" size={22} color="#fff" />
+                  </TouchableOpacity>
+                <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+                  <AntDesign name="adduser" size={22} color="#fff" />
+                </TouchableOpacity>
+                </View>
+               );
+       }
+    })
+
+  const [isTableView, setIsTableView] = useState(false);
+  const [page, setPage] = useState(0);
+  const itemsPerPage = 5;
+
+  const tenants = [
     {
       id: '1',
-      // image: 'https://avatar.iran.liara.run/public/boy?username=Ash',
       name: 'Henry',
       gender: 'female',
       phone: '+92 300 1234567',
       room: '1200',
-      rent: 'admin',
+      rent: '5000',
+      salary: '10000',
+      role: 'admin',
     },
     {
       id: '2',
       name: 'Thomas',
       phone: '+92 300 7654321',
-      salary: '10000',
-      role: 'admin',
+      room: '1300',
+      rent: '5500',
+      salary: '11000',
+      role: 'user',
     },
   ];
 
-  const handleView = user => {
-    console.log('View:', user);
+  const toggleView = () => {
+    setIsTableView(prev => {
+      if (!prev) {
+        Orientation.lockToLandscape();
+      } else {
+        Orientation.lockToPortrait();
+      }
+      return !prev;
+    });
   };
 
-  const handleDelete = id => {
-    console.log('Delete:', id);
-  };
+  const handleView = user => console.log('View:', user);
+  const handleDelete = id => console.log('Delete:', id);
+
+  useEffect(() => {
+    return () => Orientation.unlockAllOrientations();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>Active Tenants</Text>
-          <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
-            <AntDesign name="adduser" size={22} color="#fff" />
+        {/* <View style={styles.titleRow}>
+          <TouchableOpacity onPress={()=>navigation.goBack()}>
+          <Ionicons name='arrow-back' size={24}/>
           </TouchableOpacity>
-        </View>
-        <View style={styles.separator} />
-        <FlatList
-          data={ActiveTenant}
-          keyExtractor={item => item.id}
-          renderItem={({item}) => (
-            <TenantCard
-              user={item}
-              onView={handleView}
-              onDelete={handleDelete}
-            />
-          )}
-        />
+          <Text style={styles.title}>Active Tenants</Text>
+          <View style={{ flexDirection: 'row' }}>
+            <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+              <AntDesign name="retweet" size={22} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('AddTenant')} style={styles.topIcon}>
+              <AntDesign name="adduser" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View> */}
+        {/* <View style={styles.separator} /> */}
+
+        {isTableView ? (
+          <DataTable>
+            <DataTable.Header>
+              <DataTable.Title>Name</DataTable.Title>
+              <DataTable.Title>Phone</DataTable.Title>
+              <DataTable.Title>Rent</DataTable.Title>
+              <DataTable.Title>Room</DataTable.Title>
+              <DataTable.Title>Role</DataTable.Title>
+            </DataTable.Header>
+            {tenants
+              .slice(page * itemsPerPage, (page + 1) * itemsPerPage)
+              .map(item => (
+                <DataTable.Row key={item.id}>
+                  <DataTable.Cell>{item.name}</DataTable.Cell>
+                  <DataTable.Cell>{item.phone}</DataTable.Cell>
+                  <DataTable.Cell>{item.rent}</DataTable.Cell>
+                  <DataTable.Cell>{item.room}</DataTable.Cell>
+                  <DataTable.Cell>{item.role}</DataTable.Cell>
+                </DataTable.Row>
+              ))}
+          </DataTable>
+        ) : (
+          <FlatList
+            data={tenants}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => (
+              <TenantCard user={item} onView={handleView} onDelete={handleDelete} />
+            )}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
+  },
+  container: {
+    padding: 24,
+    flex: 1,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    // marginBottom: 10,
+  },
   title: {
-    fontSize: 28,
-    marginBottom: 10,
-    fontWeight: 'bold',
+    fontSize: 22,
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
   separator: {
     height: 1,
     backgroundColor: '#ccc',
-    marginTop: 10,
-    marginBottom: 20,
+    marginVertical: 10,
   },
-  container: {
-    padding: 24,
-    // backgroundColor: '#f2f2f2',
-    flex: 1,
+  topIcon: {
+    marginLeft: 10,
+    backgroundColor: '#75AB38',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
   },
   card: {
     backgroundColor: '#fff',
@@ -124,11 +203,9 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
   },
   sideBox: {
     width: '30%',
-    justifyContent: 'center',
     alignItems: 'center',
   },
   infoBox: {
@@ -136,13 +213,20 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginBottom: 6,
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ccc',
   },
   buttonContainer: {
     flexDirection: 'row',
-    marginTop: 10,
     justifyContent: 'flex-end',
+    marginTop: 10,
   },
   viewBtn: {
     backgroundColor: '#4CAF50',
@@ -159,125 +243,7 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F9F9F9',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  status: {
-    marginTop: 6,
-    fontWeight: 'bold',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  active: {
-    backgroundColor: '#d4edda',
-    color: '#155724',
-  },
-  inactive: {
-    backgroundColor: '#f8d7da',
-    color: '#721c24',
-  },
-  topIcon: {
-    paddingVertical: 6,
-    paddingHorizontal: 15,
-    backgroundColor: '#75AB38',
-    borderRadius: 10,
-  },
-  avatar: {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-  backgroundColor: '#ccc',
-},
-
 });
-
-// import * as React from 'react';
-// import { DataTable } from 'react-native-paper';
-
-// const ActiveTenants = () => {
-//   const [page, setPage] = React.useState();
-//   const [numberOfItemsPerPageList] = React.useState([2, 3, 4]);
-//   const [itemsPerPage, onItemsPerPageChange] = React.useState(
-//     numberOfItemsPerPageList[0]
-//   );
-
-//    const ActiveTenants = [{
-//       id: '1',
-//       image:'',
-//       name: 'Henry',
-//       gender:'female',
-//       phone: '+92 300 1234567',
-//       room: '1200',
-//       role: 'admin',
-//     },
-//     {
-//       id: '2',
-//       image:'',
-//       name: 'Henry',
-//       gender:'female',
-//       salary:'12000',
-//       phone: '+92 300 1234567',
-//       room: '1200',
-//       rent:'1200',
-//       role: 'admin',
-//     },
-//   ];
-
-//   const from = page * itemsPerPage;
-//   const to = Math.min((page + 1) * itemsPerPage, ActiveTenants.length);
-
-//   React.useEffect(() => {
-//     setPage(0);
-//   }, [itemsPerPage]);
-
-//   return (
-//     <DataTable>
-//       <DataTable.Header>
-//         <DataTable.Title>Image</DataTable.Title>
-//         <DataTable.Title >Name</DataTable.Title>
-//         <DataTable.Title >Phone</DataTable.Title>
-//         <DataTable.Title >rent</DataTable.Title>
-//         <DataTable.Title >role</DataTable.Title>
-//         <DataTable.Title >room</DataTable.Title>
-//         <DataTable.Title >salary</DataTable.Title>
-//       </DataTable.Header>
-
-//       {ActiveTenants.slice(from, to).map((item) => (
-//         <DataTable.Row key={item.key}>
-//           <DataTable.Cell>{item.image}</DataTable.Cell>
-//           <DataTable.Cell numeric>{item.name}</DataTable.Cell>
-//           <DataTable.Cell numeric>{item.phone}</DataTable.Cell>
-//           <DataTable.Cell numeric>{item.rent}</DataTable.Cell>
-//           <DataTable.Cell numeric>{item.role}</DataTable.Cell>
-//           <DataTable.Cell numeric>{item.room}</DataTable.Cell>
-//           <DataTable.Cell numeric>{item.salary}</DataTable.Cell>
-//         </DataTable.Row>
-//       ))}
-
-//       {/* <DataTable.Pagination
-//         page={page}
-//         numberOfPages={Math.ceil(items.length / itemsPerPage)}
-//         onPageChange={(page) => setPage(page)}
-//         label={`${from + 1}-${to} of ${items.length}`}
-//         numberOfItemsPerPageList={numberOfItemsPerPageList}
-//         numberOfItemsPerPage={itemsPerPage}
-//         onItemsPerPageChange={onItemsPerPageChange}
-//         showFastPaginationControls
-//         selectPageDropdownLabel={'Rows per page'}
-//       /> */}
-//     </DataTable>
-//   );
-// };
-
-// export default ActiveTenants;

@@ -11,6 +11,7 @@ import React from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
 
 const ReportCard = ({user, onView, onDelete}) => (
   <View style={styles.card2} key={user.id}>
@@ -43,10 +44,10 @@ export default function Reports() {
   };
 
   const reports = [
-    {label: 'Assets Reports', count: 1, icon: 'file-text-o' , comp:'ActiveTenantReport'},
-    {label: 'Active Tenants Reports', count: 2, icon: 'file-text-o'},
-    {label: 'Inactive Tenants Reports', count: 10, icon: 'file-text-o'},
-    {label: 'Profit and Loss Report', count: 3, icon: 'file-text-o'},
+    {label: 'Assets Reports', count: 1, icon: 'file-text-o' , comp:'AssetReport' },
+    {label: 'Active Tenants Reports', count: 2, icon: 'file-text-o' , comp:'ActiveTenantReport' },
+    {label: 'Inactive Tenants Reports', count: 10, icon: 'file-text-o' , comp:'InActiveTenantReport'},
+    {label: 'Profit and Loss Report', count: 3, icon: 'file-text-o' , comp:'ProfitAndLossReport'},
   ];
 
   const reportList = [
@@ -77,7 +78,7 @@ export default function Reports() {
         <View style={styles.separator} />
         <View style={styles.cardList}>
           {reports.map((item, index) => (
-            <TouchableOpacity onPress={()=>navigation.navigate('ActiveTenantReport')} key={index} style={styles.card}>
+            <TouchableOpacity onPress={()=>navigation.navigate(item.comp)} key={index} style={styles.card}>
               <View style={styles.iconWrapper}>
                 <View style={styles.icons}>
                   <FontAwesome name={item.icon} size={15} color="#fff" />
@@ -118,20 +119,23 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 25,
+    // fontWeight: 'bold',
+    fontFamily: font.secondary,
   },
   subtitle: {
     fontSize: 25,
     marginTop: 10,
     color: '#4E4E5F',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
   },
   subheading: {
     fontSize: 18,
     marginTop: 5,
     color: '#4E4E5F',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
   },
   separator: {
     height: 1,
@@ -141,7 +145,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
     marginTop: 10,
     marginBottom: 10,
     color: '#4E4E5F',
@@ -179,12 +184,14 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: '#7CB33D',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: font.secondary,
+    // fontWeight: '600',
   },
   cardCount: {
     color: '#7CB33D',
     fontSize: 13,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
     marginTop: 4,
   },
   icons: {
@@ -205,7 +212,8 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -228,7 +236,8 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
   },
   card2: {
     backgroundColor: '#fff',

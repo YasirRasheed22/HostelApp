@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -72,13 +73,15 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 25,
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     color: '#333',
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
+    fontFamily:font.primary,
     marginBottom: 20,
   },
   input: {
@@ -99,14 +102,16 @@ export const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     fontSize: 16,
   },
   linkText: {
     color: '#4f46e5',
     textAlign: 'center',
     marginTop: 10,
-    fontWeight: '600',
+    fontFamily:font.secondary,
+    // fontWeight: '600',
   },
     safeArea: {
     flex: 1,

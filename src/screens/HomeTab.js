@@ -5,13 +5,43 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Alert,
+  Dimensions,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Entypo from 'react-native-vector-icons/Entypo';
-import {useNavigation} from '@react-navigation/native';
+import {DrawerActions, useNavigation} from '@react-navigation/native';
+import {BarChart} from 'react-native-chart-kit';
+import {font} from '../components/ThemeStyle';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ApiUrl } from '../../config/services';
 
 export default function HomeTab() {
+  const [greeting, setGreeting] = useState('');
+
+  const [rooms, setRooms] = useState([]);
+  const [filledRooms, setFilledRooms] = useState([]);
+  const [vacantRooms, setVacantRooms] = useState([]);
+
+  useEffect(() => {
+    const getGreeting = () => {
+      const hour = new Date().getHours();
+
+      if (hour >= 5 && hour < 12) return 'Good Morning 🌇';
+      if (hour >= 12 && hour < 15) return 'Good Noon ☀️';
+      if (hour >= 15 && hour < 18) return 'Good Afternoon 🌤️';
+      if (hour >= 18 && hour < 21) return 'Good Evening 🌇';
+      return 'Good Night 🌙';
+    };
+
+    setGreeting(getGreeting());
+    getFilledRooms();
+    getAllRooms();
+    getVacantRooms();
+  }, []);
+
   const navigation = useNavigation();
   const stats = [
     {
@@ -35,91 +65,167 @@ export default function HomeTab() {
   ];
 
   const attendance = [
-    {label: 'In', count: 12 , comp: 'Attendance'},
-    {label: 'Out', count: 4 , comp:'Attendance'},
+    {label: 'In', count: 12, comp: 'Attendance'},
+    {label: 'Out', count: 4, comp: 'Attendance'},
   ];
 
-
-  const vacantRooms = [
-    {
-      floorName: '1',
-      RoomName: 'B-86',
-      capacity: '4',
-      Tenants: '4',
-      status: 'Active',
-    },
-  ];
-  const FilledRooms = [
-    {
-      floorName: '2',
-      RoomName: 'A-47',
-      capacity: '2',
-      Tenants: '1',
-      status: 'Active',
-    },
-  ];
-  const Rooms = [
-     {
-      floorName: '1',
-      RoomName: 'A-47',
-      capacity: '2',
-      Tenants: '1',
-      status: 'Active',
-    },
-    {
-      floorName: '2',
-      RoomName: 'B-86',
-      capacity: '4',
-      Tenants: '4',
-      status: 'Active',
-    },
-  ];
+  const vacantRoom = vacantRooms;
+  const FilledRooms = filledRooms;
+  const Rooms = rooms;
 
   const ReceivedAmount = [
-  { image : '' , name: 'Adam' , phone: '123456789' , rent:'230' , paymentDate: '23 Jan 2024' , status:'Active'},
-];
+    {
+      image: '',
+      name: 'Adam',
+      phone: '123456789',
+      rent: '230',
+      paymentDate: '23 Jan 2024',
+      status: 'Active',
+    },
+  ];
   const ReceivableAmount = [
-  { image : '' , name: 'Harry' , phone: '1434456789' , rent:'230' , paymentDate: '23 Jan 2024' , status:'InActive'},
-];
+    {
+      image: '',
+      name: 'Harry',
+      phone: '1434456789',
+      rent: '230',
+      paymentDate: '23 Jan 2024',
+      status: 'InActive',
+    },
+  ];
+
+  const WeeklyExpenses = {
+    labels: ['week1', 'week2', 'week3', 'week4'],
+    datasets: [
+      {
+        data: [20, 45, 28, 80],
+      },
+    ],
+  };
+  const WeeklyFees = {
+    labels: ['week1', 'week2', 'week3', 'week4'],
+    datasets: [
+      {
+        data: [1.2, 1.4, 1.8, 3.3],
+      },
+    ],
+  };
+
+  const getAllRooms = async () => {
+    try {
+      const db_name = await AsyncStorage.getItem('db_name');
+      const payload = {db_name};
+
+      const response = await axios.put(
+        `${ApiUrl}/api/rooms`,
+        payload,
+      );
+      console.log(payload)
+      const mappedRooms = response.data.map(room => ({
+        floorName: room.floor_name,
+        RoomName: room.name,
+        capacity: room.capacity,
+        Tenants: room.tenantCount,
+        status: room.tenantCount >= room.capacity ? 'Occupied' : 'Available',
+      }));
+
+      setRooms(mappedRooms);
+    } catch (error) {
+      console.log('Failed to fetch all rooms:', error);
+    }
+  };
+
+  const getFilledRooms = async () => {
+    try {
+      const db_name = await AsyncStorage.getItem('db_name');
+      const payload = {db_name};
+
+      const response = await axios.put(
+        `${ApiUrl}/api/rooms/filled-room`,
+        payload,
+      );
+      console.log('filled............room', response.data);
+
+      const mappedRooms = response.data.map(room => ({
+        floorName: room.floor_name,
+        RoomName: room.name,
+        capacity: room.capacity,
+        Tenants: room.tenantCount,
+        status: room.tenantCount >= room.capacity ? 'Occupied' : 'Available',
+      }));
+
+      setFilledRooms(mappedRooms);
+    } catch (error) {
+      console.log('Failed to fetch filled rooms:', error);
+    }
+  };
+
+  const getVacantRooms = async () => {
+    try {
+      const db_name = await AsyncStorage.getItem('db_name');
+      const payload = {db_name};
+
+      const response = await axios.put(
+        `${ApiUrl}/api/rooms/vacant-room`,
+        payload,
+      );
+
+      const mappedRooms = response.data.map(room => ({
+        floorName: room.floor_name,
+        RoomName: room.name,
+        capacity: room.capacity,
+        Tenants: room.tenantCount,
+        status: room.tenantCount >= room.capacity ? 'Occupied' : 'Available',
+      }));
+
+      setVacantRooms(mappedRooms);
+    } catch (error) {
+      console.log('Failed to fetch vacant rooms:', error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Dashboard</Text>
-          <TouchableOpacity>
+          <TouchableOpacity
+          // onPress={navigation.dispatch(DrawerActions.openDrawer())}
+          >
             <Entypo name="menu" size={28} color="#4E4E5F" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.separator} />
         <View style={styles.topContainer}>
-          <Text style={styles.subtitle}>Good Evening 🌇</Text>
+          <Text style={styles.subtitle}>{greeting}</Text>
           <Text style={styles.subheading}>Welcome! Staff Update</Text>
         </View>
 
         <Text style={styles.sectionTitle}>Stats</Text>
-        <View style={styles.cardList}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.horizontalScroll}>
           {stats.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.card}
+              style={[styles.card, styles.horizontalCard]}
               onPress={() => {
                 if (item.label === 'Rooms') {
-                  navigation.navigate('Rooms', { data: Rooms });
+                  navigation.navigate('Rooms', {data: Rooms});
                 } else if (item.label === 'Vacant Rooms') {
-                  navigation.navigate('Rooms', { data: vacantRooms });
+                  navigation.navigate('Rooms', {data: vacantRoom});
                 } else if (item.label === 'Filled Rooms') {
-                  navigation.navigate('Rooms', { data: FilledRooms });
+                  navigation.navigate('Rooms', {data: FilledRooms});
                 } else if (item.label === 'Received Amount') {
-                  navigation.navigate('Payments', { data: ReceivedAmount });
-                }  else if (item.label === 'Receivable Amount') {
-                  navigation.navigate('Payments', { data: ReceivableAmount });
+                  navigation.navigate('Payments', {data: ReceivedAmount});
+                } else if (item.label === 'Receivable Amount') {
+                  navigation.navigate('Payments', {data: ReceivableAmount});
                 } else if (item.comp) {
                   navigation.navigate(item.comp);
                 }
-              }}
-              >
+              }}>
               <View style={styles.iconWrapper}>
                 <View style={styles.icons}>
                   <FontAwesome name={item.icon} size={20} color="#fff" />
@@ -131,12 +237,18 @@ export default function HomeTab() {
               </View>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
 
         <Text style={styles.sectionTitle}>Attendance</Text>
-        <View style={styles.cardList}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.horizontalScroll}>
           {attendance.map((item, index) => (
-            <TouchableOpacity onPress={()=>navigation.navigate(item.comp)} key={index} style={styles.card}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate(item.comp)}
+              key={index}
+              style={[styles.card, styles.horizontalCard]}>
               <View style={styles.iconWrapper}>
                 <View style={styles.icons}>
                   <Entypo name="cycle" size={26} color="#fff" />
@@ -148,7 +260,58 @@ export default function HomeTab() {
               </View>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
+
+        <Text style={styles.sectionTitle}>Charts</Text>
+        <Text style={{textAlign: 'center', marginTop: '20'}}>
+          Weekly Expenses
+        </Text>
+        <ScrollView horizontal>
+          <BarChart
+            style={styles.chart}
+            data={WeeklyExpenses}
+            width={Dimensions.get('window').width - 70}
+            height={300}
+            chartConfig={{
+              backgroundColor: '#FFFFFF',
+              backgroundGradientFrom: '#FFFFFF',
+              backgroundGradientTo: '#FFFFFF',
+              decimalPlaces: 0, // optional: round y-axis values
+              color: () => `#75AB38`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // axis labels in black
+              barPercentage: 0.5,
+              strokeWidth: 2,
+              useShadowColorFromDataset: false,
+            }}
+            verticalLabelRotation={30}
+            fromZero={true}
+            showBarTops={false}
+          />
+        </ScrollView>
+
+        <Text style={{textAlign: 'center', marginTop: '30'}}>Weekly Fees</Text>
+        <ScrollView horizontal>
+          <BarChart
+            style={styles.chart}
+            data={WeeklyFees}
+            width={Dimensions.get('window').width - 70}
+            height={300}
+            chartConfig={{
+              backgroundColor: '#FFFFFF',
+              backgroundGradientFrom: '#FFFFFF',
+              backgroundGradientTo: '#FFFFFF',
+              decimalPlaces: 0, // optional: round y-axis values
+              color: () => `#75AB38`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // axis labels in black
+              barPercentage: 0.5,
+              strokeWidth: 2,
+              useShadowColorFromDataset: false,
+            }}
+            verticalLabelRotation={30}
+            fromZero={true}
+            showBarTops={false}
+          />
+        </ScrollView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -163,20 +326,21 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 25,
+    // fontWeight: 'bold',
+    fontFamily: font.secondary,
   },
   subtitle: {
     fontSize: 25,
+    fontFamily: font.secondary,
     marginTop: 10,
     color: '#4E4E5F',
-    fontWeight: 'bold',
   },
   subheading: {
     fontSize: 18,
+    fontFamily: font.primary,
     marginTop: 5,
     color: '#4E4E5F',
-    fontWeight: 'bold',
   },
   separator: {
     height: 1,
@@ -186,7 +350,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: font.secondary,
     marginTop: 20,
     color: '#4E4E5F',
   },
@@ -210,22 +375,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapper: {
-    width: '20%',
+    width: '30%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   textWrapper: {
-    width: '80%',
+    width: '70%',
   },
   cardTitle: {
     color: '#7CB33D',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: font.secondary,
+    // fontWeight: '600',
   },
   cardCount: {
     color: '#7CB33D',
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    // fontWeight: 'bold',
+    fontFamily: font.primary,
     marginTop: 4,
   },
   icons: {
@@ -239,6 +406,19 @@ const styles = StyleSheet.create({
   topContainer: {
     backgroundColor: '#fff',
     padding: 15,
+    borderRadius: 10,
+  },
+  horizontalScroll: {
+    marginTop: 10,
+  },
+  horizontalCard: {
+    width: 200,
+    marginRight: 12,
+  },
+  chart: {
+    padding: 10,
+    backgroundColor: '#fff',
+    marginTop: 10,
     borderRadius: 10,
   },
 });

@@ -14,6 +14,8 @@ import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import {Modal, PaperProvider, Portal, TextInput} from 'react-native-paper';
 import CheckBox from '@react-native-community/checkbox';
+import { font } from '../components/ThemeStyle';
+import { useNavigation } from '@react-navigation/native';
 
 const facilitiesList = [
   'Tenants',
@@ -41,6 +43,24 @@ export default function AddStaff() {
   const [roleModalVisible, setRoleModalVisible] = useState(false);
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [checkAll, setCheckAll] = useState(false);
+  const navigation = useNavigation();
+
+   navigation.setOptions({
+      headerTitle: 'Add Staff',
+       headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+      //  headerRight:()=>{
+      //          return(
+      //            <View style={{ flexDirection: 'row' }}>
+      //           <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+      //               <AntDesign name="retweet" size={22} color="#fff" />
+      //             </TouchableOpacity>
+      //           <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+      //             <AntDesign name="adduser" size={22} color="#fff" />
+      //           </TouchableOpacity>
+      //           </View>
+      //          );
+      //  }
+    })
 
   const toggleFacility = item => {
     const exists = selectedFacilities.includes(item);
@@ -121,8 +141,8 @@ export default function AddStaff() {
   return (
     <PaperProvider>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Add staff</Text>
-        <View style={styles.separator} />
+        {/* <Text style={styles.title}>Add staff</Text>
+        <View style={styles.separator} /> */}
 
         <Text style={styles.sectionTitle}>Personal Information</Text>
 
@@ -144,36 +164,41 @@ export default function AddStaff() {
             value={name}
             onChangeText={setName}
             style={styles.input}
+            underlineColor="transparent"
           />
           <TextInput
             label="CNIC/B-FORM"
             value={cnic}
             onChangeText={setCnic}
             style={styles.input}
+            underlineColor="transparent"
           />
           <TextInput
             label="Phone No"
             value={phone}
             onChangeText={setPhone}
             style={styles.input}
+            underlineColor="transparent"
           />
           <TextInput
             label="E-Mail"
             value={email}
             onChangeText={setEmail}
             style={styles.input}
+            underlineColor="transparent"
           />
           <TextInput
             label="Salary"
             value={salary}
             onChangeText={setSalary}
             style={styles.input}
+            underlineColor="transparent"
           />
 
           <TouchableOpacity
             onPress={() => setPaymentDateModalVisible(true)}
-            style={styles.genderSelector}>
-            <Text style={{color: paymentDate ? '#000' : '#888'}}>
+            style={styles.field}>
+            <Text style={styles.fieldText}>
               {paymentDate || 'Select Payment Date'}
             </Text>
           </TouchableOpacity>
@@ -202,6 +227,7 @@ export default function AddStaff() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            underlineColor="transparent"
             style={styles.input}
           />
           <TextInput
@@ -209,13 +235,14 @@ export default function AddStaff() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
+            underlineColor="transparent"
             style={styles.input}
           />
 
           <TouchableOpacity
             onPress={() => setRoleModalVisible(true)}
-            style={styles.genderSelector}>
-            <Text style={{color: role ? '#000' : '#888'}}>
+            style={styles.field}>
+            <Text style={styles.fieldText}>
               {role || 'Select Role'}
             </Text>
           </TouchableOpacity>
@@ -244,6 +271,7 @@ export default function AddStaff() {
             value={emergencyContact}
             onChangeText={setEmergencyContact}
             style={styles.input}
+            underlineColor="transparent"
           />
 
           <Text style={styles.sectionTitle}>Access Control</Text>
@@ -283,8 +311,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 25,
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginBottom: 10,
   },
   separator: {
@@ -294,7 +323,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     color: '#75AB38',
     marginVertical: 10,
   },
@@ -342,7 +372,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginBottom: 10,
   },
   modalItem: {
@@ -352,6 +383,7 @@ const styles = StyleSheet.create({
   },
   modalItemText: {
     fontSize: 16,
+    fontFamily:font.primary,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -366,6 +398,7 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     marginLeft: 6,
     fontSize: 14,
+    fontFamily:font.primary,
   },
   facilitiesWrapper: {
     flexDirection: 'row',
@@ -382,6 +415,23 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary
   },
+     field: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+    height: 60, // Uniform height
+    justifyContent: 'center',
+  },
+  fieldText: {
+    color: '#333',
+    fontSize:16,
+  },
+
 });

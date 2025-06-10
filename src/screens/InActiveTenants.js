@@ -5,16 +5,25 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import React from 'react';
+import React, { useState } from 'react';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useNavigation } from '@react-navigation/native';
+import Orientation from 'react-native-orientation-locker';
+import { DataTable } from 'react-native-paper';
+import { font } from '../components/ThemeStyle';
 
 const TenantCard = ({user, onView, onDelete}) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
-        <Text>👤</Text>
+        <Image
+         source={{ uri: 'https://www.w3schools.com/w3images/avatar6.png' }}
+         style={styles.avatar}
+        />
       </View>
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user.name}</Text>
@@ -37,7 +46,29 @@ const TenantCard = ({user, onView, onDelete}) => (
 );
 
 export default function InActiveTenants() {
+
   const navigation = useNavigation();
+  console.log(navigation)
+  navigation.setOptions({
+    headerTitle: 'In Active Tenants',
+     headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+     headerRight:()=>{
+             return(
+               <View style={{ flexDirection: 'row' }}>
+              <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+                  <AntDesign name="retweet" size={22} color="#fff" />
+                </TouchableOpacity>
+              <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+                <AntDesign name="adduser" size={22} color="#fff" />
+              </TouchableOpacity>
+              </View>
+             );
+     }
+  })
+    const [isTableView, setIsTableView] = useState(false);
+    const [page, setPage] = useState(0);
+    const itemsPerPage = 5;
+
   const InactiveTenants = [
     {
       id: '1',
@@ -56,6 +87,7 @@ export default function InActiveTenants() {
       role: 'admin',
     },
   ];
+  
 
   const handleView = user => {
     console.log('View:', user);
@@ -65,27 +97,53 @@ export default function InActiveTenants() {
     console.log('Delete:', id);
   };
 
+   const toggleView = () => {
+    setIsTableView(prev => {
+      if (!prev) {
+        Orientation.lockToLandscape();
+      } else {
+        Orientation.lockToPortrait();
+      }
+      return !prev;
+    });
+  };
+
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>InActive Tenants</Text>
-          <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
-            <AntDesign name="adduser" size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
+       
         <View style={styles.separator} />
-        <FlatList
-          data={InactiveTenants}
-          keyExtractor={item => item.id}
-          renderItem={({item}) => (
-            <TenantCard
-              user={item}
-              onView={handleView}
-              onDelete={handleDelete}
-            />
-          )}
-        />
+        {isTableView ? (
+          <DataTable>
+            <DataTable.Header>
+              <DataTable.Title>Name</DataTable.Title>
+              <DataTable.Title>Phone</DataTable.Title>
+              <DataTable.Title>Rent</DataTable.Title>
+              <DataTable.Title>Room</DataTable.Title>
+              <DataTable.Title>Role</DataTable.Title>
+            </DataTable.Header>
+            {InactiveTenants
+              .slice(page * itemsPerPage, (page + 1) * itemsPerPage)
+              .map(item => (
+                <DataTable.Row key={item.id}>
+                  <DataTable.Cell>{item.name}</DataTable.Cell>
+                  <DataTable.Cell>{item.phone}</DataTable.Cell>
+                  <DataTable.Cell>{item.rent}</DataTable.Cell>
+                  <DataTable.Cell>{item.room}</DataTable.Cell>
+                  <DataTable.Cell>{item.role}</DataTable.Cell>
+                </DataTable.Row>
+              ))}
+          </DataTable>
+        ) : (
+          <FlatList
+            data={InactiveTenants}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => (
+              <TenantCard user={item} onView={handleView} onDelete={handleDelete} />
+            )}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -93,9 +151,10 @@ export default function InActiveTenants() {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 28,
-    marginBottom: 10,
-    fontWeight: 'bold',
+    fontSize: 22,
+    // marginBottom: 10,
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
   separator: {
     height: 1,
@@ -120,16 +179,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sideBox: {
-    width: '20%',
+    width: '30%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   infoBox: {
-    width: '80%',
+    width: '70%',
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -152,7 +212,8 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
   },
   safeArea: {
     flex: 1,
@@ -166,7 +227,8 @@ const styles = StyleSheet.create({
   },
   status: {
     marginTop: 6,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
@@ -181,9 +243,17 @@ const styles = StyleSheet.create({
     color: '#721c24',
   },
   topIcon: {
-    paddingVertical: 6,
-    paddingHorizontal: 15,
+    marginLeft: 10,
     backgroundColor: '#75AB38',
     borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+  },
+   avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ccc',
   },
 });

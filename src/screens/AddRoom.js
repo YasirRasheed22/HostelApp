@@ -9,6 +9,11 @@ import {
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import CheckBox from '@react-native-community/checkbox';
+import { font } from '../components/ThemeStyle';
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import { ApiUrl } from '../../config/services';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const facilitiesList = [
   'AC',
@@ -24,6 +29,8 @@ const facilitiesList = [
 ];
 
 export default function AddRoom() {
+
+  const navigation = useNavigation();
   const [roomNo, setRoomNo] = useState('');
   const [capacity, setCapacity] = useState('');
   const [amount, setAmount] = useState('');
@@ -31,6 +38,23 @@ export default function AddRoom() {
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [checkAll, setCheckAll] = useState(false);
   const [otherFacility, setOtherFacility] = useState('');
+
+   navigation.setOptions({
+      headerTitle: 'Add Room',
+       headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+    //    headerRight:()=>{
+    //            return(
+    //              <View style={{ flexDirection: 'row' }}>
+    //             <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+    //                 <AntDesign name="retweet" size={22} color="#fff" />
+    //               </TouchableOpacity>
+    //             <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+    //               <AntDesign name="adduser" size={22} color="#fff" />
+    //             </TouchableOpacity>
+    //             </View>
+    //            );
+    //    }
+    })
 
   const toggleFacility = item => {
     const exists = selectedFacilities.includes(item);
@@ -54,12 +78,35 @@ export default function AddRoom() {
     }
   };
 
+  const handleSave = async() =>{
+    const db_name = await  AsyncStorage.getItem('db_name');
+    // console.log('db_name:....' ,db_name);
+    // return false;
+    const payload = {
+      name: roomNo,
+      capacity: parseInt(capacity), 
+      per_person: parseFloat(amount), 
+      floor_name: floor,
+      facilities: JSON.stringify([...selectedFacilities, otherFacility].filter(f => f)), // combines and filters non-empty
+      // createdAt: new Date().toISOString(),
+      // updatedAt: new Date().toISOString(),
+      db_name : db_name
+    };
+
+    try {
+      const response = await axios.post(`${ApiUrl}/api/rooms` , payload);
+      console.log(response);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.titleRow}>
+      {/* <View style={styles.titleRow}>
         <Text style={styles.title}>Add Room</Text>
       </View>
-      <View style={styles.separator} />
+      <View style={styles.separator} /> */}
       <Text style={styles.sectionTitle}>Room Information</Text>
 
       <View style={styles.row}>
@@ -92,26 +139,26 @@ export default function AddRoom() {
             <Picker.Item label="Floor No" value="" />
             <Picker.Item label="Basement" value="basement" />
             <Picker.Item label="Ground" value="ground" />
-            <Picker.Item label="Floor 1" value="floor1" />
-            <Picker.Item label="Floor 2" value="floor2" />
-            <Picker.Item label="Floor 3" value="floor3" />
-            <Picker.Item label="Floor 4" value="floor4" />
-            <Picker.Item label="Floor 5" value="floor5" />
-            <Picker.Item label="Floor 6" value="floor6" />
-            <Picker.Item label="Floor 7" value="floor7" />
-            <Picker.Item label="Floor 8" value="floor8" />
-            <Picker.Item label="Floor 9" value="floor9" />
-            <Picker.Item label="Floor 10" value="floor10" />
-            <Picker.Item label="Floor 11" value="floor11" />
-            <Picker.Item label="Floor 12" value="floor12" />
-            <Picker.Item label="Floor 13" value="floor13" />
-            <Picker.Item label="Floor 14" value="floor14" />
-            <Picker.Item label="Floor 15" value="floor15" />
-            <Picker.Item label="Floor 16" value="floor16" />
-            <Picker.Item label="Floor 17" value="floor17" />
-            <Picker.Item label="Floor 18" value="floor18" />
-            <Picker.Item label="Floor 19" value="floor19" />
-            <Picker.Item label="Floor 20" value="floor20" />
+            <Picker.Item label="Floor 1" value="1" />
+            <Picker.Item label="Floor 2" value="2" />
+            <Picker.Item label="Floor 4" value="4" />
+            <Picker.Item label="Floor 5" value="5" />
+            <Picker.Item label="Floor 3" value="3" />
+            <Picker.Item label="Floor 6" value="6" />
+            <Picker.Item label="Floor 7" value="7" />
+            <Picker.Item label="Floor 8" value="8" />
+            <Picker.Item label="Floor 9" value="9" />
+            <Picker.Item label="Floor 10" value="10" />
+            <Picker.Item label="Floor 11" value="11" />
+            <Picker.Item label="Floor 12" value="12" />
+            <Picker.Item label="Floor 13" value="13" />
+            <Picker.Item label="Floor 14" value="14" />
+            <Picker.Item label="Floor 15" value="15" />
+            <Picker.Item label="Floor 16" value="16" />
+            <Picker.Item label="Floor 17" value="17" />
+            <Picker.Item label="Floor 18" value="18" />
+            <Picker.Item label="Floor 19" value="19" />
+            <Picker.Item label="Floor 20" value="20" />
           </Picker>
         </View>
       </View>
@@ -146,7 +193,7 @@ export default function AddRoom() {
         )}
       </View>
 
-      <TouchableOpacity style={styles.saveBtn}>
+      <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
         <Text style={styles.saveBtnText}>Save</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -161,7 +208,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary,
     color: '#75AB38',
     marginBottom: 10,
   },
@@ -189,6 +237,7 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 50,
+    color:'#808080'
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -209,6 +258,7 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     marginLeft: 6,
     fontSize: 14,
+    fontFamily:font.primary,
   },
   saveBtn: {
     backgroundColor: '#75AB38',
@@ -219,12 +269,14 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary
   },
   title: {
-    fontSize: 28,
+    fontSize: 25,
     marginBottom: 10,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily:font.secondary
   },
   separator: {
     height: 1,

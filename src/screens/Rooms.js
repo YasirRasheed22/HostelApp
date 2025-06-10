@@ -10,6 +10,7 @@ import {
 import React from 'react';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
 
 const RoomCard = ({user, onView, onDelete}) => (
   <View style={styles.card}>
@@ -22,7 +23,7 @@ const RoomCard = ({user, onView, onDelete}) => (
       </View>
       <View style={styles.infoBox}>
         <Text>Floor No. {user.floorName}</Text>
-        <Text>Room Nqme: {user.RoomNo}</Text>
+        <Text>Room Name: {user.RoomName}</Text>
         <Text>Capacity: {user.capacity}</Text>
         <Text>Tenants : {user.Tenants}</Text>
         <Text
@@ -48,6 +49,19 @@ const RoomCard = ({user, onView, onDelete}) => (
 );
 export default function Rooms() {
   const navigation = useNavigation();
+   navigation.setOptions({
+    headerTitle: 'Rooms',
+     headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+     headerRight:()=>{
+             return(
+               <TouchableOpacity
+            onPress={() => navigation.navigate('AddRoom')}
+            style={styles.topIcon}>
+            <AntDesign name="adduser" size={22} color="#fff" />
+          </TouchableOpacity>
+             );
+     }
+  })
   const route = useRoute();
   const {data} = route.params;
 
@@ -62,15 +76,15 @@ export default function Rooms() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <View style={styles.titleRow}>
+        {/* <View style={styles.titleRow}>
           <Text style={styles.title}>Rooms</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('AddRoom')}
             style={styles.topIcon}>
             <AntDesign name="adduser" size={22} color="#fff" />
           </TouchableOpacity>
-        </View>
-        <View style={styles.separator} />
+        </View> */}
+        {/* <View style={styles.separator} /> */}
         <FlatList
           data={data}
           keyExtractor={item => item.id}
@@ -85,9 +99,10 @@ export default function Rooms() {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 28,
+    fontSize: 25,
     marginBottom: 10,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+    fontFamily: font.secondary,
   },
   separator: {
     height: 1,
@@ -121,7 +136,8 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -144,7 +160,8 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: 'white',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
   },
   safeArea: {
     flex: 1,
@@ -158,7 +175,8 @@ const styles = StyleSheet.create({
   },
   status: {
     marginTop: 6,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
+     fontFamily: font.secondary,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
