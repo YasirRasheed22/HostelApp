@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import React, {useEffect, useState} from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import Orientation from 'react-native-orientation-locker';
 import { font } from '../components/ThemeStyle';
 import axios from 'axios';
@@ -59,10 +59,10 @@ const UserCard = ({user, toggleStatus, onView, onDelete}) => (
 );
 
 export default function Tenants() {
-
+  const isFocused = useIsFocused();
   useEffect(()=>{
    fetchTenants();
-  },[db_name])
+  },[db_name,isFocused])
 
 
 
@@ -89,7 +89,7 @@ const fetchTenants = async () => {
       status: tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1), // e.g., "active" -> "Active"
     }));
 
-    setUsers(transformedUsers);
+    setUsers(transformedUsers.reverse());
   } catch (error) {
     console.error('Error fetching tenants:', error);
   }
@@ -117,10 +117,10 @@ const fetchTenants = async () => {
     })
   }
 
-  const handleView = user => {
-    console.log('View:', user);
-    navigation.navigate('TenantView' , {id:'1'})
-  };
+ const handleView = (user) => {
+  console.log('User ID:', user.id); // Log the ID to verify
+  navigation.navigate('TenantView', { id: user.id });
+};
 
   const handleDelete = id => {
     console.log('Delete:', id);
