@@ -1,20 +1,20 @@
-import React, {useState} from 'react';
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
-  StyleSheet,
+  TextInput,
   TouchableOpacity,
+  StyleSheet,
   Alert,
 } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {useRoute} from '@react-navigation/native';
 import {Picker} from '@react-native-picker/picker';
 import CheckBox from '@react-native-community/checkbox';
-import {font} from '../components/ThemeStyle';
-import {useNavigation} from '@react-navigation/native';
-import axios from 'axios';
-import {ApiUrl} from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {ApiUrl} from '../../config/services';
+import axios from 'axios';
+import {font} from '../components/ThemeStyle';
 
 const facilitiesList = [
   'AC',
@@ -29,32 +29,14 @@ const facilitiesList = [
   'Others',
 ];
 
-export default function AddRoom() {
-  const navigation = useNavigation();
-  const [roomNo, setRoomNo] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [amount, setAmount] = useState('');
-  const [floor, setFloor] = useState('');
+export default function EditRoom() {
+  const route = useRoute();
+  const {id} = route.params;
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [checkAll, setCheckAll] = useState(false);
-  const [otherFacility, setOtherFacility] = useState('');
+  const [rooms, setRoom] = useState([]);
 
-  navigation.setOptions({
-    headerTitle: 'Add Room',
-    headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
-    //    headerRight:()=>{
-    //            return(
-    //              <View style={{ flexDirection: 'row' }}>
-    //             <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
-    //                 <AntDesign name="retweet" size={22} color="#fff" />
-    //               </TouchableOpacity>
-    //             <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
-    //               <AntDesign name="adduser" size={22} color="#fff" />
-    //             </TouchableOpacity>
-    //             </View>
-    //            );
-    //    }
-  });
+  const [otherFacility, setOtherFacility] = useState('');
 
   const toggleFacility = item => {
     const exists = selectedFacilities.includes(item);
@@ -68,6 +50,43 @@ export default function AddRoom() {
     }
   };
 
+  const handleSave = async () => {
+    const db = await AsyncStorage.getItem('db_name');
+
+    // Replace 'Others' with the user-provided value
+    let finalFacilities = [...selectedFacilities];
+    if (finalFacilities.includes('Others') && otherFacility.trim() !== '') {
+      finalFacilities = finalFacilities.map(f =>
+        f === 'Others' ? otherFacility.trim() : f,
+      );
+    }
+
+    // Stringify the array as a proper JSON array string
+    const facilitiesString = JSON.stringify(finalFacilities);
+
+    const payload = {
+      name: rooms.name,
+      capacity: parseInt(rooms.capacity),
+      per_person: parseFloat(rooms.per_person),
+      floor_name: rooms.floor_name,
+      facilities: facilitiesString, // ✅ This is like '["Heater","AC"]'
+      db_name: db,
+    };
+
+    try {
+      console.log('Payload:', payload);
+      const response = await axios.put(
+        `${ApiUrl}/api/rooms/update/${id}`,
+        payload,
+      );
+      console.log('Edit API response:', response.data);
+      Alert.alert('Room Updated Successfully');
+    } catch (error) {
+      console.log('Error while saving:', error.message);
+      Alert.alert('Something went wrong... try again');
+    }
+  };
+
   const toggleAll = () => {
     if (checkAll) {
       setSelectedFacilities([]);
@@ -78,31 +97,46 @@ export default function AddRoom() {
     }
   };
 
-  const handleSave = async () => {
-    const db_name = await AsyncStorage.getItem('db_name');
-    // console.log('db_name:....' ,db_name);
-    // return false;
-    const payload = {
-      name: roomNo,
-      capacity: parseInt(capacity),
-      per_person: parseFloat(amount),
-      floor_name: floor,
-      facilities: JSON.stringify(
-        [...selectedFacilities, otherFacility].filter(f => f),
-      ), // combines and filters non-empty
-      // createdAt: new Date().toISOString(),
-      // updatedAt: new Date().toISOString(),
-      db_name: db_name,
+  useEffect(() => {
+    const fetchRoom = async () => {
+      const db = await AsyncStorage.getItem('db_name');
+      const payload = {db_name: db};
+
+      try {
+        const response = await axios.put(
+          `${ApiUrl}/api/rooms/single/${id}`,
+          payload,
+        );
+        const roomData = response.data;
+        setRoom(roomData);
+
+        // ✅ Parse facilities from JSON string to array
+        let facilities = [];
+        try {
+          facilities = JSON.parse(roomData.facilities);
+        } catch (e) {
+          console.warn('Facilities parse error:', e.message);
+          facilities = [];
+        }
+
+        // ✅ Detect if there's a custom "Others" facility
+        const others = facilities.find(f => !facilitiesList.includes(f));
+        if (others) {
+          setOtherFacility(others);
+          facilities = facilities.map(f =>
+            !facilitiesList.includes(f) ? 'Others' : f,
+          );
+        }
+
+        setSelectedFacilities(facilities);
+        setCheckAll(facilities.length === facilitiesList.length);
+      } catch (error) {
+        console.log('Error fetching room:', error.message);
+      }
     };
 
-    try {
-      const response = await axios.post(`${ApiUrl}/api/rooms`, payload);
-      Alert.alert('Room Added Successfully');
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+    fetchRoom();
+  }, [id]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -115,14 +149,14 @@ export default function AddRoom() {
       <View style={styles.row}>
         <TextInput
           placeholder="ROOM NO"
-          value={roomNo}
-          onChangeText={setRoomNo}
+          value={rooms.name}
+          onChangeText={text => setRoom(prev => ({...prev, name: text}))}
           style={styles.input}
         />
         <TextInput
           placeholder="PEOPLE CAPACITY"
-          value={capacity}
-          onChangeText={setCapacity}
+          value={String(rooms.capacity)}
+          onChangeText={text => setRoom(prev => ({...prev, capacity: text}))}
           style={styles.input}
         />
       </View>
@@ -130,14 +164,16 @@ export default function AddRoom() {
       <View style={styles.row}>
         <TextInput
           placeholder="PER PERSON AMOUNT"
-          value={amount}
-          onChangeText={setAmount}
+          value={String(rooms.per_person)}
+          onChangeText={text => setRoom(prev => ({...prev, per_person: text}))}
           style={styles.input}
         />
         <View style={styles.pickerWrapper}>
           <Picker
-            selectedValue={floor}
-            onValueChange={itemValue => setFloor(itemValue)}
+            selectedValue={rooms.floor_name}
+            onValueChange={text =>
+              setRoom(prev => ({...prev, floor_name: text}))
+            }
             style={styles.picker}>
             <Picker.Item label="Floor No" value="" />
             <Picker.Item label="Basement" value="basement" />

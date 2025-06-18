@@ -6,21 +6,25 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import { font } from '../components/ThemeStyle';
+import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
+import {font} from '../components/ThemeStyle';
+import {ApiUrl} from '../../config/services';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const RoomCard = ({user, onView, onDelete}) => (
+const RoomCard = ({user, onView, onDelete, onEdit}) => (
   <View style={styles.card}>
     <View style={styles.row}>
-      <View style={styles.sideBox}>
+      {/* <View style={styles.sideBox}>
         <Image
           source={{uri: 'https://www.w3schools.com/w3images/avatar6.png'}}
           style={styles.avatar}
         />{' '}
-      </View>
+      </View> */}
       <View style={styles.infoBox}>
         <Text>Floor No. {user.floorName}</Text>
         <Text>Room Name: {user.RoomName}</Text>
@@ -29,7 +33,7 @@ const RoomCard = ({user, onView, onDelete}) => (
         <Text
           style={[
             styles.status,
-            user.status === 'Active' ? styles.active : styles.inactive,
+            user.status === 'Available' ? styles.active : styles.inactive,
           ]}>
           Status: {user.status}
         </Text>
@@ -38,6 +42,9 @@ const RoomCard = ({user, onView, onDelete}) => (
     <View style={styles.buttonContainer}>
       <TouchableOpacity onPress={() => onView(user)} style={styles.viewBtn}>
         <Text style={styles.btnText}>View</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => onEdit(user)} style={styles.EditBtn}>
+        <Text style={styles.btnText}>Edit</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => onDelete(user.id)}
@@ -49,28 +56,107 @@ const RoomCard = ({user, onView, onDelete}) => (
 );
 export default function Rooms() {
   const navigation = useNavigation();
-   navigation.setOptions({
-    headerTitle: 'Rooms',
-     headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
-     headerRight:()=>{
-             return(
-               <TouchableOpacity
-            onPress={() => navigation.navigate('AddRoom')}
-            style={styles.topIcon}>
-            <AntDesign name="adduser" size={22} color="#fff" />
-          </TouchableOpacity>
-             );
-     }
-  })
+
+  const [rooms, setRooms] = useState();
+  const [refreshKey, setRefreshKey] = useState();
   const route = useRoute();
   const {data} = route.params;
+  console.log('props data', data);
+
+  navigation.setOptions({
+    headerTitle: `${data}`,
+    headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
+    headerRight: () => {
+      return (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('AddRoom')}
+          style={styles.topIcon}>
+          <AntDesign name="adduser" size={22} color="#fff" />
+        </TouchableOpacity>
+      );
+    },
+  });
+
+  let url = '';
+  if (data === 'AllRoom') {
+    url = `${ApiUrl}/api/rooms`;
+  } else if (data === 'VacantRoom') {
+    url = `${ApiUrl}/api/rooms/vacant-room`;
+  } else if (data === 'FilledRoom') {
+    url = `${ApiUrl}/api/rooms/filled-room`;
+  }
+
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    const fetchRoom = async () => {
+      const db = await AsyncStorage.getItem('db_name');
+      const payload = {
+        db_name: db,
+      };
+      try {
+        console.log('url...', url);
+        const response = await axios.put(`${url}`, payload);
+        console.log(response.data);
+        const mappedRooms = response.data.data.map(room => ({
+          id: room.id,
+          floorName: room.floor_name,
+          RoomName: room.name,
+          capacity: room.capacity,
+          Tenants: room.tenantCount,
+          status: room.tenantCount >= room.capacity ? 'Occupied' : 'Available',
+        }));
+
+        setRooms(mappedRooms);
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
+
+    fetchRoom();
+  }, [url, isFocused, refreshKey]);
+  console.log(url);
 
   const handleView = user => {
     console.log('View:', user);
+    navigation.navigate('RoomView', {id: user.id});
+  };
+
+  const handleEdit = user => {
+    console.log('User ID from edit view:', user.id);
+    navigation.navigate('EditRoom', {id: user.id});
   };
 
   const handleDelete = id => {
     console.log('Delete:', id);
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/rooms/${id}`, {
+                data: {db_name: db},
+              });
+              console.log('Room deleted successfully');
+              setRefreshKey(prev => prev + 1);
+            } catch (error) {
+              console.error('Error deleting room:', error.message);
+              Alert.alert('Error', 'Failed to delete the room.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
   return (
@@ -86,10 +172,15 @@ export default function Rooms() {
         </View> */}
         {/* <View style={styles.separator} /> */}
         <FlatList
-          data={data}
+          data={rooms}
           keyExtractor={item => item.id}
           renderItem={({item}) => (
-            <RoomCard user={item} onView={handleView} onDelete={handleDelete} />
+            <RoomCard
+              user={item}
+              onView={handleView}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+            />
           )}
         />
       </View>
@@ -137,7 +228,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     // fontWeight: 'bold',
-     fontFamily: font.secondary,
+    fontFamily: font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -161,7 +252,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: 'white',
     // fontWeight: 'bold',
-     fontFamily: font.secondary,
+    fontFamily: font.secondary,
   },
   safeArea: {
     flex: 1,
@@ -176,7 +267,7 @@ const styles = StyleSheet.create({
   status: {
     marginTop: 6,
     // fontWeight: 'bold',
-     fontFamily: font.secondary,
+    fontFamily: font.secondary,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
@@ -201,5 +292,12 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#ccc',
+  },
+  EditBtn: {
+    backgroundColor: 'gray',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginRight: 10,
   },
 });

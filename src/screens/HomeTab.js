@@ -122,6 +122,7 @@ export default function HomeTab() {
       );
       console.log(payload)
       const mappedRooms = response.data.map(room => ({
+        id:room.id,
         floorName: room.floor_name,
         RoomName: room.name,
         capacity: room.capacity,
@@ -213,11 +214,11 @@ export default function HomeTab() {
               style={[styles.card, styles.horizontalCard]}
               onPress={() => {
                 if (item.label === 'Rooms') {
-                  navigation.navigate('Rooms', {data: Rooms});
+                  navigation.navigate('Rooms', {data: 'AllRoom'});
                 } else if (item.label === 'Vacant Rooms') {
-                  navigation.navigate('Rooms', {data: vacantRoom});
+                  navigation.navigate('Rooms', {data: 'VacantRoom'});
                 } else if (item.label === 'Filled Rooms') {
-                  navigation.navigate('Rooms', {data: FilledRooms});
+                  navigation.navigate('Rooms', {data: 'FilledRoom'});
                 } else if (item.label === 'Received Amount') {
                   navigation.navigate('Payments', {data: ReceivedAmount});
                 } else if (item.label === 'Receivable Amount') {

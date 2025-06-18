@@ -14,8 +14,11 @@ import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import {Modal, PaperProvider, Portal, TextInput} from 'react-native-paper';
 import CheckBox from '@react-native-community/checkbox';
-import { font } from '../components/ThemeStyle';
-import { useNavigation } from '@react-navigation/native';
+import {font} from '../components/ThemeStyle';
+import {useNavigation} from '@react-navigation/native';
+import axios from 'axios';
+import {ApiUrl} from '../../config/services';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const facilitiesList = [
   'Tenants',
@@ -45,22 +48,22 @@ export default function AddStaff() {
   const [checkAll, setCheckAll] = useState(false);
   const navigation = useNavigation();
 
-   navigation.setOptions({
-      headerTitle: 'Add Staff',
-       headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
-      //  headerRight:()=>{
-      //          return(
-      //            <View style={{ flexDirection: 'row' }}>
-      //           <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
-      //               <AntDesign name="retweet" size={22} color="#fff" />
-      //             </TouchableOpacity>
-      //           <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
-      //             <AntDesign name="adduser" size={22} color="#fff" />
-      //           </TouchableOpacity>
-      //           </View>
-      //          );
-      //  }
-    })
+  navigation.setOptions({
+    headerTitle: 'Add Staff',
+    headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
+    //  headerRight:()=>{
+    //          return(
+    //            <View style={{ flexDirection: 'row' }}>
+    //           <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+    //               <AntDesign name="retweet" size={22} color="#fff" />
+    //             </TouchableOpacity>
+    //           <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+    //             <AntDesign name="adduser" size={22} color="#fff" />
+    //           </TouchableOpacity>
+    //           </View>
+    //          );
+    //  }
+  });
 
   const toggleFacility = item => {
     const exists = selectedFacilities.includes(item);
@@ -128,10 +131,42 @@ export default function AddStaff() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !phone || !role || !password || password !== confirmPassword) {
       Alert.alert('Validation Error', 'Please fill all fields correctly.');
       return;
+    }
+    const db_name = AsyncStorage.getItem('db_name');
+    const formData = new FormData();
+
+    formData.append('fullName', 'test6');
+    formData.append('cnic', '12121212121212');
+    formData.append('phone', '121212121212');
+    formData.append('email', 'fg@gmail.com');
+    formData.append('salary', '1200');
+    formData.append('paymentCycle', '3');
+    formData.append('password', '87654321');
+    formData.append('role', 'admin');
+    formData.append('db_name', 'lahore_hostel');
+    formData.append('emergency_contact', '123456789');
+
+  const privilegesObj = {};
+facilitiesList.forEach(item => {
+  privilegesObj[item.toLowerCase()] = selectedFacilities.includes(item);
+});
+formData.append('privileges', JSON.stringify(privilegesObj));
+
+
+    try {
+      console.log(formData);
+      const response = await axios.post(`${ApiUrl}/api/users`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log(response);
+    } catch (error) {
+      console.log(error.message);
     }
 
     // Handle save logic here (API call or local state)
@@ -242,9 +277,7 @@ export default function AddStaff() {
           <TouchableOpacity
             onPress={() => setRoleModalVisible(true)}
             style={styles.field}>
-            <Text style={styles.fieldText}>
-              {role || 'Select Role'}
-            </Text>
+            <Text style={styles.fieldText}>{role || 'Select Role'}</Text>
           </TouchableOpacity>
           <Portal>
             <Modal
@@ -299,7 +332,6 @@ export default function AddStaff() {
             <Text style={styles.saveBtnText}>Save</Text>
           </TouchableOpacity>
         </View>
-        
       </ScrollView>
     </PaperProvider>
   );
@@ -313,7 +345,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
     marginBottom: 10,
   },
   separator: {
@@ -324,7 +356,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
     color: '#75AB38',
     marginVertical: 10,
   },
@@ -373,7 +405,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
     marginBottom: 10,
   },
   modalItem: {
@@ -383,7 +415,7 @@ const styles = StyleSheet.create({
   },
   modalItemText: {
     fontSize: 16,
-    fontFamily:font.primary,
+    fontFamily: font.primary,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -398,7 +430,7 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     marginLeft: 6,
     fontSize: 14,
-    fontFamily:font.primary,
+    fontFamily: font.primary,
   },
   facilitiesWrapper: {
     flexDirection: 'row',
@@ -416,9 +448,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     // fontWeight: 'bold',
-    fontFamily:font.secondary
+    fontFamily: font.secondary,
   },
-     field: {
+  field: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
@@ -431,7 +463,6 @@ const styles = StyleSheet.create({
   },
   fieldText: {
     color: '#333',
-    fontSize:16,
+    fontSize: 16,
   },
-
 });

@@ -8,17 +8,20 @@ import {
   Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import React from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { font } from '../components/ThemeStyle';
+import React, {useEffect, useState} from 'react';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
+import {font} from '../components/ThemeStyle';
+import axios from 'axios';
+import {ApiUrl} from '../../config/services';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const StaffCard = ({user, onView, onDelete}) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
         <Image
-         source={{ uri: 'https://www.w3schools.com/w3images/avatar6.png' }}
-         style={styles.avatar}
+          source={{uri: 'https://www.w3schools.com/w3images/avatar6.png'}}
+          style={styles.avatar}
         />
       </View>
       <View style={styles.infoBox}>
@@ -43,36 +46,54 @@ const StaffCard = ({user, onView, onDelete}) => (
 
 export default function StaffMember() {
   const navigation = useNavigation();
-   navigation.setOptions({
+  const [staffmembers, setStaffMembers] = useState([]);
+  navigation.setOptions({
     headerTitle: 'Staff Members',
-     headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
-     headerRight:()=>{
-             return(
-              <TouchableOpacity onPress={()=>navigation.navigate('AddStaff')} style={styles.topIcon}>
-            <AntDesign name="adduser" size={22} color="#fff" />
-          </TouchableOpacity>
-             );
-     }
-  })
-  const staffmember = [
-    {
-      id: '1',
-      name: 'Henry',
-      phone: '+92 300 1234567',
-      salary: '1200',
-      role: 'admin',
+    headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
+    headerRight: () => {
+      return (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('AddStaff')}
+          style={styles.topIcon}>
+          <AntDesign name="adduser" size={22} color="#fff" />
+        </TouchableOpacity>
+      );
     },
-    {
-      id: '2',
-      name: 'Thomas',
-      phone: '+92 300 7654321',
-      salary: '10000',
-      role: 'admin',
-    },
-  ];
+  });
 
-  const handleView = user => {
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    const fetchStaff = async () => {
+      const db = await AsyncStorage.getItem('db_name');
+      const payload = {
+        db_name: db,
+      };
+      console.log(payload);
+      try {
+        const response = await axios.put(`${ApiUrl}/api/users`, payload);
+        console.log(response);
+        const mappedStaff = response.data.users.map(staff => ({
+          id: staff.id,
+          name: staff.fullName,
+          phone: staff.phone,
+          salary: staff.salary,
+          role: staff.role,
+        }));
+        setStaffMembers(mappedStaff);
+
+        setStaffMembers(mappedStaff);
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
+
+    fetchStaff();
+  }, [isFocused]);
+  
+
+  const handleView = (user) => {
     console.log('View:', user);
+    navigation.navigate('StaffView' , {id: user.id});
   };
 
   const handleDelete = id => {
@@ -88,7 +109,7 @@ export default function StaffMember() {
         </View> */}
         {/* <View style={styles.separator} /> */}
         <FlatList
-          data={staffmember}
+          data={staffmembers}
           keyExtractor={item => item.id}
           renderItem={({item}) => (
             <StaffCard
@@ -108,7 +129,7 @@ const styles = StyleSheet.create({
     fontSize: 25,
     marginBottom: 10,
     // fontWeight: 'bold',
-     fontFamily: font.secondary,
+    fontFamily: font.secondary,
   },
   separator: {
     height: 1,
@@ -143,7 +164,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     // fontWeight: 'bold',
-     fontFamily: font.secondary,
+    fontFamily: font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -167,7 +188,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: 'white',
     // fontWeight: 'bold',
-     fontFamily: font.secondary,
+    fontFamily: font.secondary,
   },
   safeArea: {
     flex: 1,
@@ -182,7 +203,7 @@ const styles = StyleSheet.create({
   status: {
     marginTop: 6,
     // fontWeight: 'bold',
-     fontFamily: font.secondary,
+    fontFamily: font.secondary,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
@@ -202,11 +223,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#75AB38',
     borderRadius: 10,
   },
-   avatar: {
+  avatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
     backgroundColor: '#ccc',
   },
 });
-

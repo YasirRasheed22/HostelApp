@@ -21,38 +21,23 @@ import {
   TextInput,
 } from 'react-native-paper';
 import {font} from '../components/ThemeStyle';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ApiUrl} from '../../config/services';
 import axios from 'axios';
 
-export default function AddTenant() {
-  const [rooms, setRooms] = useState([]);
+export default function EditTenant() {
 
-  useEffect(() => {
-    const getRooms = async () => {
-      const db = await AsyncStorage.getItem('db_name');
-      const payload = {db_name: db};
 
-      try {
-        console.log('running api');
-        const response = await axios.put(`${ApiUrl}/api/rooms`, payload);
-        setRooms(response.data.data); // <-- store rooms here
-        console.log(response.data);
-      } catch (error) {
-        console.log(error.message);
-      }
-    };
-
-    getRooms();
-  }, []);
-
-  const [name, setName] = useState('');
-  const [cnic, setCnic] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [securityFee, setSecurityFee] = useState('');
-  const [birthDate, setBirthDate] = useState(null);
+  const route = useRoute();
+  const {id} = route.params;
+  const [user, setUser] = useState(null);
+  // const [name, setName] = useState(user?.name);
+  // const [cnic, setCnic] = useState('');
+  // const [phone, setPhone] = useState('');
+  // const [email, setEmail] = useState('');
+  // const [securityFee, setSecurityFee] = useState('');
+  // const [birthDate, setBirthDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -61,8 +46,8 @@ export default function AddTenant() {
   const [relation, setRelation] = useState('');
   const [phone1, setPhone1] = useState('');
   const [roomRent, setRoomRent] = useState('');
-  const [messTitle, setMessTitle] = useState('');
-  const [messPrice, setMessPrice] = useState('');
+  // const [messTitle, setMessTitle] = useState('');
+  // const [messPrice, setMessPrice] = useState('');
   const [messStatus, setMessStatus] = useState('no');
 
   const [gender, setGender] = useState(null);
@@ -74,7 +59,7 @@ export default function AddTenant() {
   const [jobTitle, setJobTitle] = useState(null);
   const [jobModalVisible, setJobModalVisible] = useState(false);
 
-  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [room, setRoom] = useState(null);
   const [roomModalVisible, setRoomModalVisible] = useState(false);
 
   const [paymentDate, setPaymentDate] = useState(null);
@@ -91,7 +76,7 @@ export default function AddTenant() {
   };
 
   navigation.setOptions({
-    headerTitle: 'Add Tenants',
+    headerTitle: 'Edit Tenants',
     headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
     //    headerRight:()=>{
     //            return(
@@ -106,6 +91,31 @@ export default function AddTenant() {
     //            );
     //    }
   });
+  useEffect(() => {
+    const fetchUser = async () => {
+      const db = await AsyncStorage.getItem('db_name');
+      const payload = {
+        db_name: db,
+      };
+      try {
+        const response = await axios.post(
+          `${ApiUrl}/api/tenants/single/${id}`,
+          payload,
+        );
+        console.log('User fetched:', response.data.tenant);
+        setUser(response.data.tenant);
+        setMessStatus(response.data.tenant.mess_status)
+      } catch (error) {
+        console.log('Error fetching user:', error.message);
+      }
+    };
+
+    //   Alert.alert('User ID', id);
+    fetchUser();
+  }, [id]);
+
+    
+    // Alert.alert(user?.mess_status)
 
   const handlePropertyChange = (text, index) => {
     const updated = [...properties];
@@ -166,46 +176,40 @@ export default function AddTenant() {
 
     const formData = new FormData();
 
-    formData.append('name', name);
-    formData.append('phone', phone);
-    formData.append('cnic', cnic);
-    formData.append('email', email);
-    formData.append('dob', birthDate.toString());
-    formData.append('gender', gender.toString());
-    formData.append('securityFees', securityFee);
-    formData.append('marital_status', maritalStatus.toString());
-    formData.append('permanent_address', permanentAddress);
+    formData.append('name', user.name);
+    formData.append('phone', user?.phone);
+    formData.append('cnic', user?.cnic);
+    formData.append('email', user?.email);
+    formData.append('dob', user?.dob.toString());
+    formData.append('gender', user?.gender.toString());
+    formData.append('securityFees', user?.securityFees);
+    formData.append('marital_status', user?.marital_status.toString());
+    formData.append('permanent_address', user?.permanent_address);
     formData.append('db_name', db);
-    formData.append('state', state);
-    formData.append('job_title', jobTitle.toString());
-    formData.append('job_location', occupationAddress);
-    formData.append('paymentCycleDate', paymentDate);
-    formData.append('rentForRoom', roomRent);
-    formData.append('roomId', selectedRoom.toString());
+    formData.append('state', user?.state);
+    formData.append('job_title', user?.job_title.toString());
+    formData.append('job_location', user?.job_location);
+    formData.append('paymentCycleDate', user?.paymentCycleDate);
+    formData.append('rentForRoom', user?.rentForRoom);
+    formData.append('roomId', user?.room?.id);
     formData.append('mess_status', messStatus);
-    formData.append('mess_title', messTitle);
-    formData.append('mess_price', messPrice);
-    console.log(selectedImage);
-    formData.append('profile_image', {
-      uri: selectedImage, // from ImagePicker
-      name: 'profile.jpg',
-      type: 'image/jpeg',
-    });
+    formData.append('mess_title', user?.mess_title);
+    formData.append('mess_price', user?.mess_price);
+
     // For array fields like `guardians`, stringify them if backend expects JSON string
     formData.append('guardians', JSON.stringify([]));
+    // console.log(`${ApiUrl}/api/tenants/update/${id}`)
 
-    console.log(formData);
-    // console.log(selectedImage);
-
+    console.log(formData , id , db);
     try {
-      const response = await axios.post(`${ApiUrl}/api/tenants/`, formData, {
+      const response = await axios.put(`${ApiUrl}/api/tenants/update/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
       console.log('API response', response.data);
-      Alert.alert('Tenant added Succesfully');
+      Alert.alert('Tenant Updated Succesfully')
     } catch (error) {
       console.log('Error:', error.message);
     }
@@ -218,6 +222,7 @@ export default function AddTenant() {
         {/* <View style={styles.separator} /> */}
 
         <Text style={styles.sectionTitle}>Personal Information</Text>
+        {/* <Text style={styles.sectionTitle}>{JSON.stringify(user)}</Text> */}
 
         <View style={styles.imageContainer}>
           <TouchableOpacity onPress={handleImagePick}>
@@ -234,98 +239,107 @@ export default function AddTenant() {
         <View style={{gap: 12}}>
           <TextInput
             label="Full Name"
-            value={name}
-            onChangeText={setName}
+            value={user?.name}
+            onChangeText={(text)=>setUser((prev)=>({...prev, name: text}))}
             style={styles.input}
             underlineColor="transparent"
           />
           <TextInput
             label="CNIC/B-FORM"
-            value={cnic}
-            onChangeText={setCnic}
+            value={user?.cnic}
+            onChangeText={(text)=>setUser((prev)=>({...prev , cnic:text}))}
             style={styles.input}
             underlineColor="transparent"
           />
           <TextInput
             label="Phone No"
-            value={phone}
-            onChangeText={setPhone}
+            value={user?.phone}
+            onChangeText={(text)=>setUser((prev)=>({...prev , phone:text}))}
             style={styles.input}
             underlineColor="transparent"
           />
           <TextInput
             label="E-Mail"
-            value={email}
-            onChangeText={setEmail}
+            value={user?.email}
+            onChangeText={(text)=>setUser((prev)=>({...prev , email:text}))}
             style={styles.input}
             underlineColor="transparent"
           />
           <TextInput
             label="Security Fee"
-            value={securityFee}
-            onChangeText={setSecurityFee}
+            value={String(user?.securityFees)}
+            onChangeText={(text)=>setUser((prev)=>({...prev , securityFees:text}))}
             style={styles.input}
             underlineColor="transparent"
           />
 
-          <TouchableOpacity
-            onPress={() => setShowDatePicker(true)}
-            style={styles.field}>
-            <Text style={styles.fieldText}>
-              {birthDate
-                ? `${birthDate.getDate().toString().padStart(2, '0')}-${(
-                    birthDate.getMonth() + 1
-                  )
-                    .toString()
-                    .padStart(2, '0')}-${birthDate.getFullYear()}`
-                : 'Choose Date'}
-            </Text>
-          </TouchableOpacity>
+         <TouchableOpacity
+                onPress={() => setShowDatePicker(true)}
+                style={styles.field}
+                >
+               <Text style={styles.fieldText}>
+                    {user?.dob
+                        ? (() => {
+                            const date = new Date(user.dob);
+                            return `${date.getDate().toString().padStart(2, '0')}-${(
+                            date.getMonth() + 1
+                            )
+                            .toString()
+                            .padStart(2, '0')}-${date.getFullYear()}`;
+                        })()
+                        : 'Choose Date'}
+                    </Text>
 
-          {showDatePicker && (
-            <DateTimePicker
-              value={birthDate || new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, date) => {
-                setShowDatePicker(false);
-                if (date) setBirthDate(date);
-              }}
-            />
-          )}
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                <DateTimePicker
+                    value={user?.dob || new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={(event, date) => {
+                    setShowDatePicker(false);
+                    if (date) {
+                        setUser((prev) => ({ ...prev, dob: date }));
+                    }
+                    }}
+                />
+                )}
 
           {/* GENDER MODAL */}
-          <TouchableOpacity
-            onPress={() => setGenderModalVisible(true)}
-            style={styles.field}>
-            <Text style={styles.fieldText}>{gender || 'Select Gender'}</Text>
-          </TouchableOpacity>
-          <Portal>
-            <Modal
-              visible={genderModalVisible}
-              onDismiss={() => setGenderModalVisible(false)}
-              contentContainerStyle={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Select Gender</Text>
-              {['male', 'female', 'other'].map(item => (
-                <TouchableOpacity
-                  key={item}
-                  onPress={() => {
-                    setGender(item);
-                    setGenderModalVisible(false);
-                  }}
-                  style={styles.modalItem}>
-                  <Text style={styles.modalItemText}>{item}</Text>
+         <TouchableOpacity
+                onPress={() => setGenderModalVisible(true)}
+                style={styles.field}>
+                <Text style={styles.fieldText}>{user?.gender || 'Select Gender'}</Text>
                 </TouchableOpacity>
-              ))}
-            </Modal>
-          </Portal>
+
+                <Portal>
+                <Modal
+                    visible={genderModalVisible}
+                    onDismiss={() => setGenderModalVisible(false)}
+                    contentContainerStyle={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>Select Gender</Text>
+                    {['male', 'female', 'other'].map((item) => (
+                    <TouchableOpacity
+                        key={item}
+                        onPress={() => {
+                        setUser((prev) => ({ ...prev, gender: item }));
+                        setGenderModalVisible(false);
+                        }}
+                        style={styles.modalItem}>
+                        <Text style={styles.modalItemText}>{item}</Text>
+                    </TouchableOpacity>
+                    ))}
+                </Modal>
+                </Portal>
+
 
           {/* Marital Status */}
           <TouchableOpacity
             onPress={() => setMaritalModalVisible(true)}
             style={styles.field}>
             <Text style={styles.fieldText}>
-              {maritalStatus || 'Select Marital Status'}
+              {user?.marital_status || 'Select Marital Status'}
             </Text>
           </TouchableOpacity>
           <Portal>
@@ -338,7 +352,7 @@ export default function AddTenant() {
                 <TouchableOpacity
                   key={item}
                   onPress={() => {
-                    setMaritalStatus(item);
+                    setUser((prev) => ({ ...prev, marital_status: item }));
                     setMaritalModalVisible(false);
                   }}
                   style={styles.modalItem}>
@@ -351,15 +365,15 @@ export default function AddTenant() {
           <Text style={styles.sectionTitle}>Address Information</Text>
           <TextInput
             label="Permanent Address"
-            value={permanentAddress}
-            onChangeText={setPermanentAddress}
+            value={user?.permanent_address}
+            onChangeText={(text)=>setUser((prev)=>({...prev , permanent_address:text}))}
             style={styles.input}
             underlineColor="transparent"
           />
           <TextInput
             label="State"
-            value={state}
-            onChangeText={setState}
+            value={user?.state}
+            onChangeText={(text)=>setUser((prev)=>({...prev , state:text}))}
             style={styles.input}
             underlineColor="transparent"
           />
@@ -369,7 +383,7 @@ export default function AddTenant() {
             onPress={() => setJobModalVisible(true)}
             style={styles.field}>
             <Text style={styles.fieldText}>
-              {jobTitle || 'Select Job Title'}
+              {user?.job_title || 'Select Job Title'}
             </Text>
           </TouchableOpacity>
           <Portal>
@@ -382,7 +396,7 @@ export default function AddTenant() {
                 <TouchableOpacity
                   key={item}
                   onPress={() => {
-                    setJobTitle(item);
+                    setUser((prev) => ({ ...prev, job_title: item }));
                     setJobModalVisible(false);
                   }}
                   style={styles.modalItem}>
@@ -393,8 +407,8 @@ export default function AddTenant() {
           </Portal>
           <TextInput
             label="Address"
-            value={occupationAddress}
-            onChangeText={setOccupationAddress}
+            value={user?.job_location}
+            onChangeText={(text)=>setUser((prev)=>({...prev , job_location:text}))}
             style={styles.input}
             underlineColor="transparent"
           />
@@ -403,9 +417,7 @@ export default function AddTenant() {
           <TouchableOpacity
             onPress={() => setRoomModalVisible(true)}
             style={styles.field}>
-            <Text style={styles.fieldText}>
-              {selectedRoom || 'Select Room'}
-            </Text>
+            <Text style={styles.fieldText}>{user?.room?.name || 'Select Room'}</Text>
           </TouchableOpacity>
           <Portal>
             <Modal
@@ -413,18 +425,17 @@ export default function AddTenant() {
               onDismiss={() => setRoomModalVisible(false)}
               contentContainerStyle={styles.modalContainer}>
               <Text style={styles.modalTitle}>Select Room</Text>
-              {Array.isArray(rooms) &&
-                rooms.map(room => (
-                  <TouchableOpacity
-                    key={room.id}
-                    onPress={() => {
-                      setSelectedRoom(room.id); // or room.name if you're storing just name
-                      setRoomModalVisible(false);
-                    }}
-                    style={styles.modalItem}>
-                    <Text style={styles.modalItemText}>{room.name}</Text>
-                  </TouchableOpacity>
-                ))}
+              {['1', '2'].map(item => (
+                <TouchableOpacity
+                  key={item}
+                  onPress={() => {
+                    setRoom(item);
+                    setRoomModalVisible(false);
+                  }}
+                  style={styles.modalItem}>
+                  <Text style={styles.modalItemText}>{item}</Text>
+                </TouchableOpacity>
+              ))}
             </Modal>
           </Portal>
 
@@ -432,7 +443,7 @@ export default function AddTenant() {
             onPress={() => setPaymentDateModalVisible(true)}
             style={styles.field}>
             <Text style={styles.fieldText}>
-              {paymentDate || 'Select Payment Date'}
+              {user?.paymentCycleDate || 'Select Payment Date'}
             </Text>
           </TouchableOpacity>
           <Portal>
@@ -457,7 +468,7 @@ export default function AddTenant() {
 
           <TextInput
             label="Room Rent"
-            value={roomRent}
+            value={String(user?.rentForRoom)}
             onChangeText={setRoomRent}
             style={styles.input}
             underlineColor="transparent"
@@ -548,15 +559,15 @@ export default function AddTenant() {
             <>
               <TextInput
                 label="Mess Title"
-                value={messTitle}
-                onChangeText={setMessTitle}
+                value={user?.mess_title}
+                onChangeText={(text)=>setUser((prev)=>({...prev , mess_title:text}))}
                 style={styles.input}
                 underlineColor="transparent"
               />
               <TextInput
                 label="Mess Price"
-                value={messPrice}
-                onChangeText={setMessPrice}
+                value={user?.mess_price}
+                onChangeText={(text)=>setUser((prev)=>({...prev , mess_price:text}))}
                 style={styles.input}
                 underlineColor="transparent"
               />
@@ -591,7 +602,7 @@ export default function AddTenant() {
           ))}
         </View>
         <TouchableOpacity style={styles.saveBtn} onPress={handleSubmit}>
-          <Text style={styles.saveBtnText}>Save</Text>
+          <Text style={styles.saveBtnText}>Update</Text>
         </TouchableOpacity>
       </ScrollView>
     </PaperProvider>

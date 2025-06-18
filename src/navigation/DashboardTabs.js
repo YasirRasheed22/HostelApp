@@ -33,6 +33,7 @@ const DashboardTabs = () => {
       <Tab.Screen
         name="Tenants"
         options={{
+          headerShown: true,
           tabBarIcon: ({color, size}) => (
             <FontAwesome name="users" size={size} color={color} />
           ),
