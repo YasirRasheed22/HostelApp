@@ -92,19 +92,22 @@ export default function Reports() {
           ))}
         </View>
         <View style={styles.container2}>
-          <Text style={styles.sectionTitle}>List</Text>
-          <FlatList
-            data={reportList}
-            keyExtractor={item => item.id}
-            renderItem={({item}) => (
-              <ReportCard
-                user={item}
-                onView={handleView}
-                onDelete={handleDelete}
-              />
-            )}
+    <Text style={styles.sectionTitle}>List</Text>
+    <View style={{ flexGrow: 1 }}>
+      <FlatList
+        scrollEnabled={false} // ✅ Important fix
+        data={reportList}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({ item }) => (
+          <ReportCard
+            user={item}
+            onView={handleView}
+            onDelete={handleDelete}
           />
-        </View>
+        )}
+      />
+    </View>
+  </View>
       </ScrollView>
     </SafeAreaView>
   );

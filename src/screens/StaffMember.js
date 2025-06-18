@@ -8,7 +8,7 @@ import {
   Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {font} from '../components/ThemeStyle';
 import axios from 'axios';
@@ -47,19 +47,20 @@ const StaffCard = ({user, onView, onDelete}) => (
 export default function StaffMember() {
   const navigation = useNavigation();
   const [staffmembers, setStaffMembers] = useState([]);
+
+useLayoutEffect(() => {
   navigation.setOptions({
     headerTitle: 'Staff Members',
-    headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
-    headerRight: () => {
-      return (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('AddStaff')}
-          style={styles.topIcon}>
-          <AntDesign name="adduser" size={22} color="#fff" />
-        </TouchableOpacity>
-      );
-    },
+    headerTitleStyle: { fontSize: 15, fontFamily: font.secondary },
+    headerRight: () => (
+      <TouchableOpacity
+        onPress={() => navigation.navigate('AddStaff')}
+        style={styles.topIcon}>
+        <AntDesign name="adduser" size={22} color="#fff" />
+      </TouchableOpacity>
+    ),
   });
+}, [navigation]); // ✅ Correct use of dependency array
 
   const isFocused = useIsFocused();
   useEffect(() => {

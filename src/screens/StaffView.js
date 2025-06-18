@@ -9,6 +9,8 @@ export default function StaffView() {
   const route = useRoute();
   const {id} = route.params;
   const [user, setUser] = useState();
+  const [rights, setRights] = useState({});
+
   console.log(id);
 
   useEffect(() => {
@@ -22,7 +24,10 @@ export default function StaffView() {
           `${ApiUrl}/api/users/single/${id}`,
           payload,
         );
-        console.log(response);
+        // console.log(response.data?.users?.rights);
+       const rights = response.data?.users?.rights; // ✅ already an object
+        console.log(rights);
+        setRights(rights);
         setUser(response.data.users);
       } catch (error) {
         console.log(error.message);
@@ -34,11 +39,11 @@ export default function StaffView() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.sectionTitle}>Personal Information</Text>
 
       <View style={styles.imageContainer}>
         <Image source={{uri: user?.profile_image}} style={styles.roundImage} />
       </View>
+      <Text style={styles.sectionTitle}>Personal Information</Text>
       <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.label}>Full Name</Text>
@@ -69,8 +74,18 @@ export default function StaffView() {
           <Text style={styles.value}>{user?.payout_date}</Text>
         </View>
       </View>
+       <Text style={styles.sectionTitle}>Rights Information</Text>
+      <View style={styles.card}>
+       <View style={{ marginTop: 20 }}>
+          <Text style={{ fontWeight: 'bold', marginBottom: 10 }}>Access Rights:</Text>
+          {rights && Object.entries(rights).map(([key, value]) => (
+            <Text key={key}>
+              {key.charAt(0).toUpperCase() + key.slice(1)}: {value ? 'True' : 'False'}
+            </Text>
+          ))}
+        </View>
+      </View>
 
-      {/* <Text style={styles.sectionTitle}>Property Information</Text> */}
     </ScrollView>
   );
 }
@@ -110,5 +125,9 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     borderWidth: 2,
     borderColor: '#75AB38',
+  },
+    imageContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
 });

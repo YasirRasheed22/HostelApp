@@ -136,19 +136,24 @@ export default function AddStaff() {
       Alert.alert('Validation Error', 'Please fill all fields correctly.');
       return;
     }
-    const db_name = AsyncStorage.getItem('db_name');
+    const db_name =  await AsyncStorage.getItem('db_name');
     const formData = new FormData();
 
-    formData.append('fullName', 'test6');
-    formData.append('cnic', '12121212121212');
-    formData.append('phone', '121212121212');
-    formData.append('email', 'fg@gmail.com');
-    formData.append('salary', '1200');
-    formData.append('paymentCycle', '3');
-    formData.append('password', '87654321');
-    formData.append('role', 'admin');
-    formData.append('db_name', 'lahore_hostel');
-    formData.append('emergency_contact', '123456789');
+    formData.append('fullName', name);
+    formData.append('cnic', cnic);
+    formData.append('phone', phone);
+    formData.append('email', email);
+    formData.append('salary', salary);
+    formData.append('paymentCycle', paymentDate);
+    formData.append('password', password);
+    formData.append('role', role);
+    formData.append('db_name', db_name);
+    formData.append('emergency_contact', emergencyContact);
+    formData.append('profile_image', {
+      uri: selectedImage, 
+      name: 'profile.jpg',
+      type: 'image/jpeg',
+    });
 
   const privilegesObj = {};
 facilitiesList.forEach(item => {
@@ -158,7 +163,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
 
 
     try {
-      console.log(formData);
+      // console.log(formData);
       const response = await axios.post(`${ApiUrl}/api/users`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -285,7 +290,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
               onDismiss={() => setRoleModalVisible(false)}
               contentContainerStyle={styles.modalContainer}>
               <Text style={styles.modalTitle}>Select Role</Text>
-              {['Admin', 'User'].map(item => (
+              {['admin', 'user'].map(item => (
                 <TouchableOpacity
                   key={item}
                   onPress={() => {

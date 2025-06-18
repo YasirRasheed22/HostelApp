@@ -8,7 +8,7 @@ import {
   Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { useNavigation } from '@react-navigation/native';
@@ -49,7 +49,8 @@ export default function InActiveTenants() {
 
   const navigation = useNavigation();
   console.log(navigation)
-  navigation.setOptions({
+  useLayoutEffect(()=>{
+    navigation.setOptions({
     headerTitle: 'In Active Tenants',
      headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
      headerRight:()=>{
@@ -65,6 +66,9 @@ export default function InActiveTenants() {
              );
      }
   })
+
+  },[navigation])
+  
     const [isTableView, setIsTableView] = useState(false);
     const [page, setPage] = useState(0);
     const itemsPerPage = 5;

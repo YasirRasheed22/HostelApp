@@ -9,7 +9,7 @@ import {
   Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 // import AntDesign from 'react-native-vector-icons/AntDesign';
 
 import {useIsFocused, useNavigation} from '@react-navigation/native';
@@ -78,7 +78,8 @@ export default function Tenants() {
     });
   };
 
-  navigation.setOptions({
+  useLayoutEffect(()=>{
+     navigation.setOptions({
     headerTitle: 'Tenants',
     headerTitleStyle: {fontSize: 25, fontFamily: font.secondary},
     headerRight: () => {
@@ -96,6 +97,8 @@ export default function Tenants() {
       );
     },
   });
+  },[navigation])
+ 
 
   const isFocused = useIsFocused();
   useEffect(() => {

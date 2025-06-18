@@ -59,10 +59,10 @@ export default function App() {
         <Stack.Screen name="InActiveTenantReport" component={InActiveTenantReport}  options={{ headerShown: true }}/>
         <Stack.Screen name="AssetReport" component={AssetReport}  options={{ headerShown: true }}/>
         <Stack.Screen name="ProfitAndLossReport" component={ProfitAndLossReport}  options={{ headerShown: true }}/>
-        <Stack.Screen name="TenantView" component={TenentView}  options={{ headerShown: true }}/>
-        <Stack.Screen name="RoomView" component={RoomView}  options={{ headerShown: true }}/>
-        <Stack.Screen name="EditRoom" component={EditRoom}  options={{ headerShown: true }}/>
-        <Stack.Screen name="StaffView" component={StaffView}  options={{ headerShown: true }}/>
+        <Stack.Screen name="TenantView" component={TenentView}   options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="RoomView" component={RoomView}   options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="EditRoom" component={EditRoom}   options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="StaffView" component={StaffView}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen
           name="Dashboard"
           component={DashboardTabs}
