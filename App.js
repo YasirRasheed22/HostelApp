@@ -26,6 +26,16 @@ import EditTenant from './src/screens/EditTenant';
 import RoomView from './src/screens/RoomView';
 import EditRoom from './src/screens/EditRoom';
 import StaffView from './src/screens/StaffView';
+import EditStaff from './src/screens/EditStaff';
+import AddAsset from './src/screens/AddAsset';
+import Assets from './src/screens/Assets';
+import AssetView from './src/screens/AssetView';
+import Expenses from './src/screens/Expenses';
+import AddExpense from './src/screens/AddExpense';
+import ExpenseView from './src/screens/ExpenseView';
+import GenerateAttendence from './src/screens/GenerateAttendence';
+import MarkAttendence from './src/screens/MarkAttendence';
+import AttendenceList from './src/screens/AttendenceList';
 // import Orientation from 'react-native-orientation-locker';
 
 const Stack = createNativeStackNavigator();
@@ -63,6 +73,16 @@ export default function App() {
         <Stack.Screen name="RoomView" component={RoomView}   options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen name="EditRoom" component={EditRoom}   options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen name="StaffView" component={StaffView}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="EditStaff" component={EditStaff}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="AddAsset" component={AddAsset}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="Assets" component={Assets}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="AssetView" component={AssetView}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="Expenses" component={Expenses}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="AddExpense" component={AddExpense}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="ExpenseView" component={ExpenseView}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="GenerateAttendence" component={GenerateAttendence}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="MarkAttendence" component={MarkAttendence}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="AttendenceList" component={AttendenceList}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen
           name="Dashboard"
           component={DashboardTabs}

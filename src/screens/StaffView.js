@@ -13,6 +13,8 @@ export default function StaffView() {
 
   console.log(id);
 
+   
+
   useEffect(() => {
     const fetchstaff = async () => {
       const db = await AsyncStorage.getItem('db_name');

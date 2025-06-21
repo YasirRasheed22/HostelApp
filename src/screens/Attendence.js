@@ -15,22 +15,30 @@ import { useNavigation } from '@react-navigation/native';
 export default function Attendence() {
   const navigation = useNavigation();
 
+  const handlePress = () =>{
+    navigation.navigate('GenerateAttendence')
+  }
+  const handleSubmit = (item) => {
+    console.log(item)
+    navigation.navigate('AttendenceList' , {data:item?.data});
+  }
+
    navigation.setOptions({
       headerTitle: 'Attendence',
        headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
        headerRight:()=>{
                return(
-                <TouchableOpacity>
+                <TouchableOpacity onPress={handlePress}>
             <AntDesign name="addfile" size={28} color="#4E4E5F" />
                </TouchableOpacity>
                );
        }
     })
   const reports = [
-    {label: 'Total', count: 1, icon: 'file-text-o'},
-    {label: 'In', count: 2, icon: 'file-text-o'},
-    {label: 'Out', count: 10, icon: 'file-text-o'},
-    {label: 'Leave', count: 3, icon: 'file-text-o'},
+    {label: 'Total', count: 1, icon: 'file-text-o' , data:'all'},
+    {label: 'In', count: 2, icon: 'file-text-o' , data:'in'},
+    {label: 'Out', count: 10, icon: 'file-text-o' , data:'out'},
+    {label: 'Leave', count: 3, icon: 'file-text-o', data:'leave'},
   ];
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -44,7 +52,7 @@ export default function Attendence() {
         {/* <View style={styles.separator}/> */}
         <View style={styles.cardList}>
           {reports.map((item, index) => (
-            <TouchableOpacity key={index} style={styles.card}>
+            <TouchableOpacity onPress={() => handleSubmit(item)} key={index} style={styles.card}>
               <View style={styles.iconWrapper}>
                 <View style={styles.icons}>
                   <FontAwesome name={item.icon} size={15} color="#fff" />

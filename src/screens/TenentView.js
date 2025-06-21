@@ -12,7 +12,7 @@ export default function TenentView() {
 
  useEffect(() => {
   const fetchUser = async () => {
-    const db = await AsyncStorage.getItem('db_name') || 'lahore_hostel';
+    const db = await AsyncStorage.getItem('db_name');
     const payload = {
         db_name : db
     }

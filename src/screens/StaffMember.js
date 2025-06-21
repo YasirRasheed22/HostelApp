@@ -15,7 +15,7 @@ import axios from 'axios';
 import {ApiUrl} from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const StaffCard = ({user, onView, onDelete}) => (
+const StaffCard = ({user, onView, onEdit, onDelete}) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
@@ -34,6 +34,9 @@ const StaffCard = ({user, onView, onDelete}) => (
     <View style={styles.buttonContainer}>
       <TouchableOpacity onPress={() => onView(user)} style={styles.viewBtn}>
         <Text style={styles.btnText}>View</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => onEdit(user)} style={styles.EditBtn}>
+        <Text style={styles.btnText}>Edit</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => onDelete(user.id)}
@@ -100,6 +103,10 @@ useLayoutEffect(() => {
   const handleDelete = id => {
     console.log('Delete:', id);
   };
+  const handleEdit = (id) => {
+    console.log('Edit:', id);
+    navigation.navigate('EditStaff', {id:id.id})
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -117,6 +124,7 @@ useLayoutEffect(() => {
               user={item}
               onView={handleView}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           )}
         />
@@ -213,6 +221,13 @@ const styles = StyleSheet.create({
   active: {
     backgroundColor: '#d4edda',
     color: '#155724',
+  },
+    EditBtn: {
+    backgroundColor: 'gray',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginRight:10,
   },
   inactive: {
     backgroundColor: '#f8d7da',
