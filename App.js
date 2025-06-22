@@ -52,7 +52,7 @@ export default function App() {
   return (
     <PaperProvider>
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName="AddExpense">
         <Stack.Screen  name="Login" component={LoginScreen}  options={{ headerShown: false }}/>
         <Stack.Screen name="Register" component={RegisterScreen}  options={{ headerShown: false }} />
         <Stack.Screen name="StaffMember" component={StaffMember}  options={{ headerShown: true }}/>
