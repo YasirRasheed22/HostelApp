@@ -18,6 +18,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiUrl } from '../../config/services';
 import { Animated, Easing } from 'react-native';
+import { SideDrawer } from '../navigation/SideDrawer';
 
 
 
@@ -42,9 +43,7 @@ export default function HomeTab() {
     };
 
     setGreeting(getGreeting());
-    // getFilledRooms();
-    // getAllRooms();
-    // getVacantRooms();
+  
   }, []);
 
   const navigation = useNavigation();
@@ -74,9 +73,7 @@ export default function HomeTab() {
     { label: 'Out', count: 4, comp: 'Attendance' },
   ];
 
-  // const vacantRoom = vacantRooms;
-  // const FilledRooms = filledRooms;
-  // const Rooms = rooms;
+ 
 
   const ReceivedAmount = [
     {
@@ -116,81 +113,7 @@ export default function HomeTab() {
     ],
   };
 
-  const getAllRooms = async () => {
-    try {
-      const db_name = await AsyncStorage.getItem('db_name');
-      const payload = { db_name };
-
-      const response = await axios.put(
-        `${ApiUrl}/api/rooms`,
-        payload,
-      );
-      console.log(payload)
-      const mappedRooms = response.data.map(room => ({
-        id: room.id,
-        floorName: room.floor_name,
-        RoomName: room.name,
-        capacity: room.capacity,
-        Tenants: room.tenantCount,
-        status: room.tenantCount >= room.capacity ? 'Occupied' : 'Available',
-      }));
-
-      setRooms(mappedRooms);
-    } catch (error) {
-      console.log('Failed to fetch all rooms:', error);
-    }
-  };
-
-  const getFilledRooms = async () => {
-    try {
-      const db_name = await AsyncStorage.getItem('db_name');
-      const payload = { db_name };
-
-      const response = await axios.put(
-        `${ApiUrl}/api/rooms/filled-room`,
-        payload,
-      );
-      console.log('filled............room', response.data);
-
-      const mappedRooms = response.data.map(room => ({
-        floorName: room.floor_name,
-        RoomName: room.name,
-        capacity: room.capacity,
-        Tenants: room.tenantCount,
-        status: room.tenantCount >= room.capacity ? 'Occupied' : 'Available',
-      }));
-
-      setFilledRooms(mappedRooms);
-    } catch (error) {
-      console.log('Failed to fetch filled rooms:', error);
-    }
-  };
-
-  const getVacantRooms = async () => {
-    try {
-      const db_name = await AsyncStorage.getItem('db_name');
-      const payload = { db_name };
-
-      const response = await axios.put(
-        `${ApiUrl}/api/rooms/vacant-room`,
-        payload,
-      );
-
-      const mappedRooms = response.data.map(room => ({
-        floorName: room.floor_name,
-        RoomName: room.name,
-        capacity: room.capacity,
-        Tenants: room.tenantCount,
-        status: room.tenantCount >= room.capacity ? 'Occupied' : 'Available',
-      }));
-
-      setVacantRooms(mappedRooms);
-    } catch (error) {
-      console.log('Failed to fetch vacant rooms:', error);
-    }
-  };
-
-
+ 
   const openDrawer = () => {
     setDrawerOpen(true);
     Animated.timing(drawerAnim, {
@@ -214,7 +137,13 @@ export default function HomeTab() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={{ flex: 1, position: 'relative' }}>
-        {/* Drawer and Overlay go here */}
+        <SideDrawer
+          drawerAnim={drawerAnim}
+          drawerOpen={drawerOpen}
+          closeDrawer={closeDrawer}
+          navigation={navigation}
+        />
+        {/* Drawer and Overlay go here
         {drawerOpen && (
           <TouchableOpacity
             style={styles.overlay}
@@ -261,7 +190,7 @@ export default function HomeTab() {
           }}>
             <Text style={styles.drawerText}>Attendence</Text>
           </TouchableOpacity>
-        </Animated.View>
+        </Animated.View> */}
         <ScrollView contentContainerStyle={styles.container}>
 
           <View style={styles.titleRow}>

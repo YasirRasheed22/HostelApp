@@ -76,7 +76,7 @@ useLayoutEffect(() => {
       try {
         const response = await axios.put(`${ApiUrl}/api/users`, payload);
         console.log(response);
-        const mappedStaff = response.data.users.map(staff => ({
+        const mappedStaff = response.data?.data.map(staff => ({
           id: staff.id,
           name: staff.fullName,
           phone: staff.phone,
@@ -97,7 +97,7 @@ useLayoutEffect(() => {
 
   const handleView = (user) => {
     console.log('View:', user);
-    navigation.navigate('StaffView' , {id: user.id});
+    navigation.navigate('StaffView' , {id: user?.id});
   };
 
   const handleDelete = id => {

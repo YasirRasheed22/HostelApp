@@ -4,9 +4,50 @@ import { ApiUrl } from '../../config/services'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { font } from '../components/ThemeStyle';
 import axios from 'axios';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
+
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+
+  try {
+    // Replace all non-standard spaces (like U+202F) with normal spaces
+    const cleanedStr = dateStr.replace(/\s+/g, ' ').trim(); // normalize spaces
+
+    // Split into date and time parts
+    const [datePart, timePart] = cleanedStr.split(' at ');
+    if (!datePart || !timePart) return '';
+
+    const [monthName, dayWithComma, year] = datePart.split(' ');
+    const day = dayWithComma.replace(',', ''); // remove comma if any
+    const [time, period] = timePart.split(' ');
+
+    const months = {
+      January: 'Jan',
+      February: 'Feb',
+      March: 'Mar',
+      April: 'Apr',
+      May: 'May',
+      June: 'Jun',
+      July: 'Jul',
+      August: 'Aug',
+      September: 'Sep',
+      October: 'Oct',
+      November: 'Nov',
+      December: 'Dec',
+    };
+
+    const shortMonth = months[monthName];
+    if (!shortMonth) return '';
+
+    return `${day} ${shortMonth}, ${time} ${period}`;
+  } catch (e) {
+    console.error('Date formatting failed:', e);
+    return '';
+  }
+};
 
 
 const UserCard = ({user, onEdit, onView, onDelete}) => (
@@ -20,7 +61,7 @@ const UserCard = ({user, onEdit, onView, onDelete}) => (
            </View>
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user?.tenant?.name}</Text>
-        <Text>Last Record Time: {user?.log_time_record}</Text>
+        <Text>Last Record Time: {formatDate(user?.log_time_record)}</Text>
         <Text>Room Info: {user?.tenant?.room?.name} | {user?.tenant?.room?.floor_name}</Text>
         <Text>Status: {user?.status}</Text>
       </View>
@@ -44,6 +85,22 @@ export default function AttendenceList() {
 
   const navigation = useNavigation();
   const [users , setUser] = useState([]);
+  const route = useRoute();
+  const {data} = route.params;
+  console.log(data);
+
+  let url = `${ApiUrl}/api/attendance/dashboard`
+
+  if(data === 'in')
+  {
+    url = `${ApiUrl}/api/attendance/status/in`
+  }else if (data === 'out')
+  {
+    url = `${ApiUrl}/api/attendance/status/out`
+  }
+  else{
+    url = `${ApiUrl}/api/attendance/dashboard`
+  }
     
 useLayoutEffect(()=>{
        navigation.setOptions({
@@ -74,7 +131,7 @@ useLayoutEffect(()=>{
                 db_name:db
             }
 
-            const response = await axios.put(`${ApiUrl}/api/attendance/dashboard`, payload);
+            const response = await axios.put(url, payload);
             console.log(response.data?.attendance);
             setUser(response.data?.attendance);
         } catch (error) {
@@ -92,7 +149,7 @@ useLayoutEffect(()=>{
     }
     const handleView=(user)=>{
         console.log(user);
-        navigation.navigate('AssetView' ,{id: user.id})
+        navigation.navigate('AttendenceView' ,{id: user.tenant_id})
     }
   return (
    <SafeAreaView style={styles.safeArea}>
@@ -164,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sideBox: {
-    width: '30%',
+    width: '25%',
     justifyContent: 'center',
     alignItems: 'center',
   },

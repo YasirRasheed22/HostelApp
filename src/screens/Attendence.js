@@ -6,14 +6,37 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { font } from '../components/ThemeStyle';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { ApiUrl } from '../../config/services';
 
 export default function Attendence() {
   const navigation = useNavigation();
+  const [counter , setCount] = useState();
+
+  useEffect(()=>{
+    const fetchRecord = async() => {
+      const db = await AsyncStorage.getItem('db_name');
+      try {
+        const payload = {
+                db_name:db
+            }
+
+         const response = await axios.put( `${ApiUrl}/api/attendance/dashboard` , payload);
+         console.log(response.data);
+         setCount(response.data);
+      } catch (error) {
+        console.log(error.message)
+      }
+    }
+
+    fetchRecord();
+  },[])
 
   const handlePress = () =>{
     navigation.navigate('GenerateAttendence')
@@ -35,21 +58,14 @@ export default function Attendence() {
        }
     })
   const reports = [
-    {label: 'Total', count: 1, icon: 'file-text-o' , data:'all'},
-    {label: 'In', count: 2, icon: 'file-text-o' , data:'in'},
-    {label: 'Out', count: 10, icon: 'file-text-o' , data:'out'},
-    {label: 'Leave', count: 3, icon: 'file-text-o', data:'leave'},
+    {label: 'Total', count: counter?.totalCount, icon: 'file-text-o' , data:'all'},
+    {label: 'In', count: counter?.presentCount, icon: 'file-text-o' , data:'in'},
+    {label: 'Out', count: counter?.absentCount, icon: 'file-text-o' , data:'out'},
+    {label: 'Leave', count:counter?.leaveCount, icon: 'file-text-o', data:'leave'},
   ];
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* <View style={styles.titleRow}>
-          <Text style={styles.title}>Attendence</Text>
-          <TouchableOpacity>
-            <AntDesign name="addfile" size={28} color="#4E4E5F" />
-          </TouchableOpacity>
-        </View> */}
-        {/* <View style={styles.separator}/> */}
         <View style={styles.cardList}>
           {reports.map((item, index) => (
             <TouchableOpacity onPress={() => handleSubmit(item)} key={index} style={styles.card}>
@@ -76,45 +92,6 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 24,
-  },
-  title: {
-    fontSize: 25,
-    // fontWeight: 'bold',
-    fontFamily:font.secondary,
-  },
-  subtitle: {
-    fontSize: 25,
-    marginTop: 10,
-    color: '#4E4E5F',
-    // fontWeight: 'bold',
-    fontFamily:font.secondary,
-  },
-  subheading: {
-    fontSize: 18,
-    marginTop: 5,
-    color: '#4E4E5F',
-    // fontWeight: 'bold',
-    fontFamily:font.secondary
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#ccc',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    // fontWeight: 'bold',
-    fontFamily:font.secondary,
-    marginTop: 10,
-    marginBottom: 10,
-    color: '#4E4E5F',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
   },
   cardList: {
     marginTop: 10,
@@ -143,14 +120,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: '#7CB33D',
     fontSize: 13,
-    fontFamily:font.secondary,
-    // fontWeight: '600',
+    fontFamily: font.secondary,
   },
   cardCount: {
     color: '#7CB33D',
     fontSize: 13,
-    // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
     marginTop: 4,
   },
   icons: {
@@ -160,52 +135,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
     backgroundColor: '#75AB38',
-  },
-  topContainer: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-  },
-  infoBox: {
-    width: '80%',
-  },
-  name: {
-    fontSize: 18,
-    // fontWeight: 'bold',
-    fontFamily:font.secondary,
-    marginBottom: 6,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'flex-end',
-  },
-  viewBtn: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  deleteBtn: {
-    backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  btnText: {
-    color: 'white',
-    // fontWeight: 'bold',
-    fontFamily:font.secondary,
-  },
-  card2: {
-    backgroundColor: '#fff',
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 10,
-    elevation: 3,
-  },
-  container2: {
-    marginTop: 20,
   },
 });

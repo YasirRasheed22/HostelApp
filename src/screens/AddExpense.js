@@ -63,8 +63,8 @@ export default function AddExpense() {
       console.log(payload);
       try {
         const response = await axios.put(`${ApiUrl}/api/users`, payload);
-        console.log(response.data.users);
-        setStaffMembers(response.data.users);
+        console.log(response.data?.data);
+        setStaffMembers(response.data?.data);
       } catch (error) {
         console.log(error.message);
       }

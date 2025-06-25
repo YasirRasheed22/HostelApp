@@ -36,6 +36,14 @@ import ExpenseView from './src/screens/ExpenseView';
 import GenerateAttendence from './src/screens/GenerateAttendence';
 import MarkAttendence from './src/screens/MarkAttendence';
 import AttendenceList from './src/screens/AttendenceList';
+import AttendenceView from './src/screens/AttendenceView';
+import LeavePage from './src/screens/LeavesPage';
+import ApplyLeave from './src/screens/ApplyLeave';
+import LeaveList from './src/screens/LeaveList';
+import AddPerk from './src/screens/AddPerk';
+import PerkList from './src/screens/PerkList';
+import FeeList from './src/screens/FeeList';
+import GenerateFee from './src/screens/GenerateFee';
 // import Orientation from 'react-native-orientation-locker';
 
 const Stack = createNativeStackNavigator();
@@ -52,7 +60,7 @@ export default function App() {
   return (
     <PaperProvider>
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="AddExpense">
+      <Stack.Navigator initialRouteName="Login">
         <Stack.Screen  name="Login" component={LoginScreen}  options={{ headerShown: false }}/>
         <Stack.Screen name="Register" component={RegisterScreen}  options={{ headerShown: false }} />
         <Stack.Screen name="StaffMember" component={StaffMember}  options={{ headerShown: true }}/>
@@ -83,6 +91,14 @@ export default function App() {
         <Stack.Screen name="GenerateAttendence" component={GenerateAttendence}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen name="MarkAttendence" component={MarkAttendence}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen name="AttendenceList" component={AttendenceList}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="AttendenceView" component={AttendenceView}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="LeavePage" component={LeavePage}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="ApplyLeave" component={ApplyLeave}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="LeaveList" component={LeaveList}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="AddPerk" component={AddPerk}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="PerkList" component={PerkList}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="FeeList" component={FeeList}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="GenerateFee" component={GenerateFee}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen
           name="Dashboard"
           component={DashboardTabs}

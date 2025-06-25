@@ -26,11 +26,11 @@ export default function StaffView() {
           `${ApiUrl}/api/users/single/${id}`,
           payload,
         );
-        // console.log(response.data?.users?.rights);
+        console.log(response.data);
        const rights = response.data?.users?.rights; // ✅ already an object
-        console.log(rights);
+        // console.log(rights);
         setRights(rights);
-        setUser(response.data.users);
+        setUser(response.data?.users);
       } catch (error) {
         console.log(error.message);
       }
