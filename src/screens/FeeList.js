@@ -8,11 +8,12 @@ import {
     Pressable,
     FlatList,
     Image,
+    Alert,
 } from 'react-native';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { font } from '../components/ThemeStyle';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -81,9 +82,10 @@ export default function FeeList() {
             console.log(error.message)
         }
     }
+    const isFocussed = useIsFocused();
     useEffect(() => {
         fetchFee();
-    }, [])
+    }, [isFocussed])
 
 
     useLayoutEffect(() => {
@@ -112,12 +114,42 @@ export default function FeeList() {
 
     const handleEdit = (user) => {
         console.log(user);
+        navigation.navigate('EditFee', {id : user.id})
     }
-    const handleDelete = (user) => {
-        console.log(user);
-    }
+    const handleDelete = async(id) => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/fees/single/${id}`, {
+                data: {db_name: db},
+              });
+              console.log('Fees deleted successfully');
+              fetchFee();
+              // Optional: refresh list or show success toast
+            } catch (error) {
+              console.error( error.message);
+              Alert.alert('Error', 'Failed to delete Fees.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
     const handleView = (user) => {
-        console.log(user);
+        console.log(user)
+        navigation.navigate('FeeView' , {id: user.id});
     }
 
     return (

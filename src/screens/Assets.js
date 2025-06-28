@@ -1,10 +1,10 @@
-import { View, Text, StyleSheet, SafeAreaView, FlatList, Image, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, SafeAreaView, FlatList, Image, TouchableOpacity, Alert } from 'react-native'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { ApiUrl } from '../../config/services'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { font } from '../components/ThemeStyle';
 import axios from 'axios';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
 
@@ -62,7 +62,11 @@ useLayoutEffect(()=>{
       },
     });
     },[navigation])
+    const isFocussed = useIsFocused();
     useEffect(()=>{
+     fetchAsset();
+    },[isFocussed])
+
      const fetchAsset = async() => {
         try {
             const db  = await AsyncStorage.getItem('db_name');
@@ -76,15 +80,42 @@ useLayoutEffect(()=>{
             console.log(error.message)
         }
      };
-     fetchAsset();
-    },[])
 
     const handleEdit=(user)=>{
         console.log(user);
+        navigation.navigate('EditAsset' ,{id: user.id})
     }
-    const handleDelete=(user)=>{
-        console.log(user);
-    }
+     const handleDelete = async id => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/inventory/${id}`, {
+                data: {db_name: db},
+              });
+              console.log('Asset deleted successfully');
+              // fetchTenants();
+              // Optional: refresh list or show success toast
+            } catch (error) {
+              console.error('Error deleting Asset:', error.message);
+              Alert.alert('Error', 'Failed to delete the Asset.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
     const handleView=(user)=>{
         console.log(user);
         navigation.navigate('AssetView' ,{id: user.id})

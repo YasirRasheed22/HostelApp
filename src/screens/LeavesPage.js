@@ -33,7 +33,7 @@ const UserCard = ({ user, toggleStatus, onEdit, onDelete }) => (
           <Text
             style={[
               styles.status,
-              user.status === 'Active' ? styles.active : styles.inactive,
+              user.status === 'approved' ? styles.active : styles.inactive,
             ]}>
             Status: {user.status}
           </Text>
@@ -60,7 +60,12 @@ export default function LeavePage() {
   const [users , setUsers] = useState();
 
   useEffect(()=>{
-    const fetchRecord = async() => {
+    
+
+    fetchRecord();
+  },[])
+
+  const fetchRecord = async() => {
       const db = await AsyncStorage.getItem('db_name');
       try {
         const payload = {
@@ -75,9 +80,6 @@ export default function LeavePage() {
         console.log(error.message)
       }
     }
-
-    fetchRecord();
-  },[])
 
   const handlePress = () =>{
     navigation.navigate('ApplyLeave')
@@ -113,11 +115,11 @@ const toggleStatus = (id, currentStatus) => {
       [
         {
           text: 'Approved',
-          onPress: () => updateStatus(id, 'Approved'),
+          onPress: () => updateStatus(id, 'approved'),
         },
         {
           text: 'Rejected',
-          onPress: () => updateStatus(id, 'Rejected'),
+          onPress: () => updateStatus(id, 'rejected'),
         },
         {
           text: 'Cancel',
@@ -128,10 +130,21 @@ const toggleStatus = (id, currentStatus) => {
     );
   };
 
-  const updateStatus = (id, newStatus) => {
-    const updatedUsers = users.map(user =>
-      user.id === id ? {...user, status: newStatus} : user,
-    );
+  const updateStatus = async(id, newStatus) => {
+   try {
+      const db = await AsyncStorage.getItem('db_name');
+      const payload = {
+        db_name: db,
+        status : newStatus
+      }
+        const response = await axios.put(`${ApiUrl}/api/leave/${id}` , payload)
+        console.log(response);
+        fetchRecord();
+
+
+     } catch (error) {
+      console.log(error.message)
+     }
     setUsers(updatedUsers);
   };
 
@@ -139,6 +152,7 @@ const toggleStatus = (id, currentStatus) => {
 
 const handleEdit = (user) => {
 console.log("on edit click" ,user)
+navigation.navigate('EditLeave' , {id: user?.id})
 };
 
 const handleDelete = (id) => {

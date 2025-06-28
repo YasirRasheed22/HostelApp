@@ -12,7 +12,7 @@ const DashboardTabs = () => {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#4f46e5',
+        tabBarActiveTintColor: '#75AB38',
         tabBarInactiveTintColor: 'gray',
         headerShown: false,
       }}>

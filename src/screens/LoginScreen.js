@@ -34,6 +34,7 @@ const LoginScreen = () => {
       console.log(payload);
       const response = await axios.post(`${ApiUrl}/api/helper/login`, payload);
       AsyncStorage.setItem("db_name", (response.data.user.db_name));
+      AsyncStorage.setItem("user", JSON.stringify(response.data.user));
       console.log("Database Name .............." , response.data.user.db_name)
       navigation.navigate('Dashboard');
     } catch (error) {
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   button: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#75AB38',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',

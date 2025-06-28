@@ -50,7 +50,7 @@ const formatDate = (dateStr) => {
 };
 
 
-const UserCard = ({user, onEdit, onView, onDelete}) => (
+const UserCard = ({user,onView}) => (
   <View style={styles.card}>
     <View style={styles.row}>
      <View style={styles.sideBox}>
@@ -70,14 +70,14 @@ const UserCard = ({user, onEdit, onView, onDelete}) => (
       <TouchableOpacity onPress={() => onView(user)} style={styles.viewBtn}>
         <Text style={styles.btnText}>View</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => onEdit(user)} style={styles.EditBtn}>
+      {/* <TouchableOpacity onPress={() => onEdit(user)} style={styles.EditBtn}>
         <Text style={styles.btnText}>Edit</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => onDelete(user.id)}
         style={styles.deleteBtn}>
         <Text style={styles.btnText}>Delete</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   </View>
 );
@@ -98,14 +98,14 @@ export default function AttendenceList() {
   {
     url = `${ApiUrl}/api/attendance/status/out`
   }
-  else{
-    url = `${ApiUrl}/api/attendance/dashboard`
-  }
+  // else{
+  //   url = `${ApiUrl}/api/attendance/dashboard`
+  // }
     
 useLayoutEffect(()=>{
        navigation.setOptions({
       headerTitle: 'Attendence',
-      headerTitleStyle: {fontSize: 25, fontFamily: font.secondary},
+      headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
       headerRight: () => {
         return (
           <View style={{flexDirection: 'row'}}>
@@ -180,8 +180,8 @@ useLayoutEffect(()=>{
               <UserCard
                 user={item}
                 onView={handleView}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
+                // onDelete={handleDelete}
+                // onEdit={handleEdit}
               />
             )}
           />

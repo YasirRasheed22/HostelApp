@@ -5,36 +5,55 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Alert,
   Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import React, { useLayoutEffect, useState } from 'react';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
+// import AntDesign from 'react-native-vector-icons/AntDesign';
 
-import { useNavigation } from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import Orientation from 'react-native-orientation-locker';
-import { DataTable } from 'react-native-paper';
-import { font } from '../components/ThemeStyle';
+import {font} from '../components/ThemeStyle';
+import axios from 'axios';
+import {ApiUrl} from '../../config/services';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {DataTable} from 'react-native-paper';
 
-const TenantCard = ({user, onView, onDelete}) => (
+const UserCard = ({user, toggleStatus, onEdit, onView, onDelete}) => (
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
         <Image
-         source={{ uri: 'https://www.w3schools.com/w3images/avatar6.png' }}
-         style={styles.avatar}
+          source={{uri: user.image}}
+          style={[styles.avatar, {objectFit: 'cover'}]}
         />
       </View>
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user.name}</Text>
+        <Text>Gender: {user.gender}</Text>
         <Text>Phone: {user.phone}</Text>
-        <Text>Salary: {user.salary}</Text>
-        <Text>Role: {user.role}</Text>
+        <Text>Room No: {user.room}</Text>
+        <Text>Rent: {user.rent}</Text>
+
+        {/* Status with touch */}
+        {/* <TouchableOpacity onPress={() => toggleStatus(user.id, user.status)}>
+          <Text
+            style={[
+              styles.status,
+              user.status === 'Active' ? styles.active : styles.inactive,
+            ]}>
+            Status: {user.status}
+          </Text>
+        </TouchableOpacity> */}
       </View>
     </View>
     <View style={styles.buttonContainer}>
       <TouchableOpacity onPress={() => onView(user)} style={styles.viewBtn}>
         <Text style={styles.btnText}>View</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => onEdit(user)} style={styles.EditBtn}>
+        <Text style={styles.btnText}>Edit</Text>
       </TouchableOpacity>
       <TouchableOpacity
         onPress={() => onDelete(user.id)}
@@ -47,62 +66,8 @@ const TenantCard = ({user, onView, onDelete}) => (
 
 export default function InActiveTenants() {
 
-  const navigation = useNavigation();
-  console.log(navigation)
-  useLayoutEffect(()=>{
-    navigation.setOptions({
-    headerTitle: 'In Active Tenants',
-     headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
-     headerRight:()=>{
-             return(
-               <View style={{ flexDirection: 'row' }}>
-              <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
-                  <AntDesign name="retweet" size={22} color="#fff" />
-                </TouchableOpacity>
-              <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
-                <AntDesign name="adduser" size={22} color="#fff" />
-              </TouchableOpacity>
-              </View>
-             );
-     }
-  })
-
-  },[navigation])
-  
-    const [isTableView, setIsTableView] = useState(false);
-    const [page, setPage] = useState(0);
-    const itemsPerPage = 5;
-
-  const InactiveTenants = [
-    {
-      id: '1',
-      image: '',
-      name: 'Henry',
-      gender: 'female',
-      phone: '+92 300 1234567',
-      room: '1200',
-      rent: 'admin',
-    },
-    {
-      id: '2',
-      name: 'Thomas',
-      phone: '+92 300 7654321',
-      salary: '10000',
-      role: 'admin',
-    },
-  ];
-  
-
-  const handleView = user => {
-    console.log('View:', user);
-  };
-
-  const handleDelete = id => {
-    console.log('Delete:', id);
-  };
-
-   const toggleView = () => {
-    setIsTableView(prev => {
+  const ToggleView = () => {
+    setTableView(prev => {
       if (!prev) {
         Orientation.lockToLandscape();
       } else {
@@ -112,39 +77,211 @@ export default function InActiveTenants() {
     });
   };
 
+  const navigation = useNavigation();
+   navigation.setOptions({
+      headerTitle: 'Active Tenants',
+       headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
+       headerRight:()=>{
+               return(
+                 <View style={{ flexDirection: 'row' }}>
+                <TouchableOpacity onPress={ToggleView} style={styles.topIcon}>
+                    <AntDesign name="retweet" size={22} color="#fff" />
+                  </TouchableOpacity>
+                <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+                  <AntDesign name="adduser" size={22} color="#fff" />
+                </TouchableOpacity>
+                </View>
+               );
+       }
+    })
+
+    useLayoutEffect(()=>{
+         navigation.setOptions({
+        headerTitle: 'Tenants',
+        headerTitleStyle: {fontSize: 25, fontFamily: font.secondary},
+        headerRight: () => {
+          return (
+            <View style={{flexDirection: 'row'}}>
+              <TouchableOpacity onPress={ToggleView} style={styles.topIcon}>
+                <AntDesign name="retweet" size={22} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('AddTenant')}
+                style={[styles.topIcon, {marginRight: 12}]}>
+                <AntDesign name="adduser" size={22} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          );
+        },
+      });
+      },[navigation])
+
+  
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    fetchTenants();
+  }, [db_name, isFocused]);
+
+  const fetchTenants = async () => {
+    try {
+      const db_name = await AsyncStorage.getItem('db_name');
+      setdb(db_name);
+
+      const payload = {
+        db_name: db_name,
+      };
+
+      const response = await axios.put(`${ApiUrl}/api/tenants/`, payload);
+      console.log('API Response:', response.data.data);
+      const data = response.data?.data;
+
+      console.log(data);
+      const activeTenant = data.filter((i)=> i.status === 'in-active');
+      console.log(activeTenant)
+
+      // Transform data to match users state structure
+      const transformedUsers = activeTenant.map(tenant => ({
+        id: tenant.id.toString(), // convert to string if needed
+        name: tenant.name,
+        gender: tenant.gender,
+        image: tenant.profile_image,
+        phone: tenant.phone,
+        room: tenant.room ? tenant.room.name : '', // handle possible null
+        rent: tenant.rentForRoom.toString(),
+        status: tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1), // e.g., "active" -> "Active"
+      }));
+
+      setUsers(transformedUsers.reverse());
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+    }
+  };
+
+  const [isTableView, setTableView] = useState(false);
+  const [page, setPage] = useState(0);
+  const [db_name, setdb] = useState('');
+  const [users, setUsers] = useState('');
+
+  const itemsPerPage = 5;
+
+  const handleView = user => {
+    console.log('User ID:', user.id); // Log the ID to verify
+    navigation.navigate('TenantView', {id: user.id});
+  };
+  const handleEdit = user => {
+    console.log('User ID from edit view:', user.id);
+    navigation.navigate('EditTenant', {id: user.id});
+  };
+
+  const handleDelete = async id => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/tenants/${id}`, {
+                data: {db_name: db},
+              });
+              console.log('Tenant deleted successfully');
+              fetchTenants();
+              // Optional: refresh list or show success toast
+            } catch (error) {
+              console.error('Error deleting room:', error.message);
+              Alert.alert('Error', 'Failed to delete the room.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const toggleStatus = (id, currentStatus) => {
+    Alert.alert(
+      'Change Status',
+      'Select new status',
+      [
+        {
+          text: 'Active',
+          onPress: () => updateStatus(id, 'Active'),
+        },
+        {
+          text: 'Inactive',
+          onPress: () => updateStatus(id, 'Inactive'),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const updateStatus = (id, newStatus) => {
+    const updatedUsers = users.map(user =>
+      user.id === id ? {...user, status: newStatus} : user,
+    );
+    setUsers(updatedUsers);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-       
-        <View style={styles.separator} />
+        {/* <View style={styles.titleRow}>
+          <Text style={styles.title}>Tenants</Text>
+          <View>
+
+          <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+            <AntDesign name="adduser" size={22} color="#fff" />
+          </TouchableOpacity>
+          </View>
+        </View> */}
+        {/* <View style={styles.separator} /> */}
         {isTableView ? (
           <DataTable>
             <DataTable.Header>
               <DataTable.Title>Name</DataTable.Title>
               <DataTable.Title>Phone</DataTable.Title>
-              <DataTable.Title>Rent</DataTable.Title>
+              <DataTable.Title>gender</DataTable.Title>
               <DataTable.Title>Room</DataTable.Title>
-              <DataTable.Title>Role</DataTable.Title>
+              <DataTable.Title>Rent</DataTable.Title>
+              <DataTable.Title>Status</DataTable.Title>
             </DataTable.Header>
-            {InactiveTenants
+            {users
               .slice(page * itemsPerPage, (page + 1) * itemsPerPage)
               .map(item => (
                 <DataTable.Row key={item.id}>
                   <DataTable.Cell>{item.name}</DataTable.Cell>
                   <DataTable.Cell>{item.phone}</DataTable.Cell>
-                  <DataTable.Cell>{item.rent}</DataTable.Cell>
+                  <DataTable.Cell>{item.gender}</DataTable.Cell>
                   <DataTable.Cell>{item.room}</DataTable.Cell>
-                  <DataTable.Cell>{item.role}</DataTable.Cell>
+                  <DataTable.Cell>{item.rent}</DataTable.Cell>
+                  <DataTable.Cell>{item.status}</DataTable.Cell>
                 </DataTable.Row>
               ))}
           </DataTable>
         ) : (
           <FlatList
-            data={InactiveTenants}
+            data={users}
             keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              <TenantCard user={item} onView={handleView} onDelete={handleDelete} />
+            renderItem={({item}) => (
+              <UserCard
+                user={item}
+                // toggleStatus={toggleStatus}
+                onView={handleView}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
             )}
           />
         )}
@@ -155,10 +292,10 @@ export default function InActiveTenants() {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 22,
-    // marginBottom: 10,
+    fontSize: 25,
+    marginBottom: 10,
     // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
   },
   separator: {
     height: 1,
@@ -193,7 +330,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
     marginBottom: 6,
   },
   buttonContainer: {
@@ -213,11 +350,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
+    marginLeft: 10,
+  },
+  EditBtn: {
+    backgroundColor: 'gray',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
   },
   btnText: {
     color: 'white',
     // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
   },
   safeArea: {
     flex: 1,
@@ -232,7 +376,7 @@ const styles = StyleSheet.create({
   status: {
     marginTop: 6,
     // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
@@ -254,7 +398,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
-   avatar: {
+  avatar: {
     width: 60,
     height: 60,
     borderRadius: 30,

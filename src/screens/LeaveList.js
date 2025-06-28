@@ -29,7 +29,7 @@ const UserCard = ({ user, toggleStatus, onEdit, onDelete }) => (
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user?.user?.fullName || user?.tenant?.name}</Text>
         <Text>Leave Date: {user?.leave_date}</Text>
-        <TouchableOpacity onPress={() => toggleStatus(user.id, user.status)}>
+        <TouchableOpacity >
           <Text
             style={[
               styles.status,
@@ -104,7 +104,7 @@ export default function LeaveList() {
   }
 
   navigation.setOptions({
-    headerTitle: `${data}`,
+    headerTitle: `${data} Leaves`,
     headerTitleStyle: { fontSize: 15, fontFamily: font.secondary },
     headerRight: () => {
       return (

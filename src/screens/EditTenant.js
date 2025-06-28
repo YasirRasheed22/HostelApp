@@ -103,6 +103,7 @@ export default function EditTenant() {
           payload,
         );
         console.log('User fetched:', response.data.tenant);
+        setSelectedImage(response.data.tenant.profile_image)
         setUser(response.data.tenant);
         setMessStatus(response.data.tenant.mess_status)
       } catch (error) {
@@ -172,48 +173,53 @@ export default function EditTenant() {
   };
 
   const handleSubmit = async () => {
-    const db = await AsyncStorage.getItem('db_name');
+  const db = await AsyncStorage.getItem('db_name');
 
-    const formData = new FormData();
+  const formData = new FormData();
 
-    formData.append('name', user.name);
-    formData.append('phone', user?.phone);
-    formData.append('cnic', user?.cnic);
-    formData.append('email', user?.email);
-    formData.append('dob', user?.dob.toString());
-    formData.append('gender', user?.gender.toString());
-    formData.append('securityFees', user?.securityFees);
-    formData.append('marital_status', user?.marital_status.toString());
-    formData.append('permanent_address', user?.permanent_address);
-    formData.append('db_name', db);
-    formData.append('state', user?.state);
-    formData.append('job_title', user?.job_title.toString());
-    formData.append('job_location', user?.job_location);
-    formData.append('paymentCycleDate', user?.paymentCycleDate);
-    formData.append('rentForRoom', user?.rentForRoom);
-    formData.append('roomId', user?.room?.id);
-    formData.append('mess_status', messStatus);
-    formData.append('mess_title', user?.mess_title);
-    formData.append('mess_price', user?.mess_price);
+  formData.append('name', user?.name || '');
+  formData.append('phone', user?.phone || '');
+  formData.append('cnic', user?.cnic || '');
+  formData.append('email', user?.email || '');
+  formData.append('dob', user?.dob?.toString() || '');
+  formData.append('gender', user?.gender?.toString() || '');
+  formData.append('securityFees', user?.securityFees || '');
+  formData.append('marital_status', user?.marital_status?.toString() || '');
+  formData.append('permanent_address', user?.permanent_address || '');
+  formData.append('db_name', db || '');
+  formData.append('state', user?.state || '');
+  formData.append('job_title', user?.job_title?.toString() || '');
+  formData.append('job_location', user?.job_location || '');
+  formData.append('paymentCycleDate', user?.paymentCycleDate || '');
+  formData.append('rentForRoom', user?.rentForRoom || '');
+  formData.append('roomId', user?.room?.id || '');
+  formData.append('mess_status', messStatus || '');
+  formData.append('mess_title', user?.mess_title || '');
+  formData.append('mess_price', user?.mess_price || '');
+  formData.append('guardians', JSON.stringify([]));
 
-    // For array fields like `guardians`, stringify them if backend expects JSON string
-    formData.append('guardians', JSON.stringify([]));
-    // console.log(`${ApiUrl}/api/tenants/update/${id}`)
+  // ✅ Ensure image is selected
+  if (selectedImage) {
+    formData.append('profile_image', {
+      uri: selectedImage,
+      name: 'profile.jpg',
+      type: 'image/jpeg',
+    });
+  }
 
-    console.log(formData , id , db);
-    try {
-      const response = await axios.put(`${ApiUrl}/api/tenants/update/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+  try {
+    const response = await axios.put(`${ApiUrl}/api/tenants/update/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
 
-      console.log('API response', response.data);
-      Alert.alert('Tenant Updated Succesfully')
-    } catch (error) {
-      console.log('Error:', error.message);
-    }
-  };
+    console.log('API response', response.data);
+    Alert.alert('Tenant Updated Successfully');
+  } catch (error) {
+    console.log('Error:', error?.response?.data || error.message);
+  }
+};
 
   return (
     <PaperProvider>

@@ -163,7 +163,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
 
 
     try {
-      // console.log(formData);
+      console.log(formData);
       const response = await axios.post(`${ApiUrl}/api/users`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

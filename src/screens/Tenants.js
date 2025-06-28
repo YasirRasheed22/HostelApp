@@ -189,12 +189,12 @@ export default function Tenants() {
       'Select new status',
       [
         {
-          text: 'Active',
-          onPress: () => updateStatus(id, 'Active'),
+          text: 'active',
+          onPress: () => updateStatus(id, 'active'),
         },
         {
-          text: 'Inactive',
-          onPress: () => updateStatus(id, 'Inactive'),
+          text: 'in-active',
+          onPress: () => updateStatus(id, 'in-active'),
         },
         {
           text: 'Cancel',
@@ -205,10 +205,21 @@ export default function Tenants() {
     );
   };
 
-  const updateStatus = (id, newStatus) => {
-    const updatedUsers = users.map(user =>
-      user.id === id ? {...user, status: newStatus} : user,
-    );
+  const updateStatus = async(id, newStatus) => {
+     try {
+      const db = await AsyncStorage.getItem('db_name');
+      const payload = {
+        db_name: db,
+        status : newStatus
+      }
+        const response = await axios.post(`${ApiUrl}/api/tenants/single/change-status/${id}` , payload)
+        console.log(response);
+        fetchTenants();
+
+
+     } catch (error) {
+      console.log(error.message)
+     }
     setUsers(updatedUsers);
   };
 

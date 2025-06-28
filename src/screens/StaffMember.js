@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
@@ -20,7 +21,7 @@ const StaffCard = ({user, onView, onEdit, onDelete}) => (
     <View style={styles.row}>
       <View style={styles.sideBox}>
         <Image
-          source={{uri: 'https://www.w3schools.com/w3images/avatar6.png'}}
+          source={{uri: user?.image}}
           style={styles.avatar}
         />
       </View>
@@ -67,12 +68,15 @@ useLayoutEffect(() => {
 
   const isFocused = useIsFocused();
   useEffect(() => {
-    const fetchStaff = async () => {
+    fetchStaff();
+  }, [isFocused]);
+
+     const fetchStaff = async () => {
       const db = await AsyncStorage.getItem('db_name');
       const payload = {
         db_name: db,
       };
-      console.log(payload);
+     
       try {
         const response = await axios.put(`${ApiUrl}/api/users`, payload);
         console.log(response);
@@ -82,6 +86,7 @@ useLayoutEffect(() => {
           phone: staff.phone,
           salary: staff.salary,
           role: staff.role,
+          image: staff.profile_image
         }));
         setStaffMembers(mappedStaff);
 
@@ -91,8 +96,6 @@ useLayoutEffect(() => {
       }
     };
 
-    fetchStaff();
-  }, [isFocused]);
   
 
   const handleView = (user) => {
@@ -100,8 +103,36 @@ useLayoutEffect(() => {
     navigation.navigate('StaffView' , {id: user?.id});
   };
 
-  const handleDelete = id => {
-    console.log('Delete:', id);
+   const handleDelete = async(id) => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/users/${id}`, {
+                data: {db_name: db},
+              });
+              console.log('Staff deleted successfully');
+              fetchStaff();
+              // Optional: refresh list or show success toast
+            } catch (error) {
+              console.error( error.message);
+              Alert.alert('Error', 'Failed to delete Member.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
   const handleEdit = (id) => {
     console.log('Edit:', id);

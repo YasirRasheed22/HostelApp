@@ -23,35 +23,36 @@ export default function AddExpense() {
   const [fileName, setFileName] = useState(null);
 
   const handleUpload = () => {
-    Alert.alert(
-      'Upload File',
-      'Choose a method',
-      [
-        {
-          text: 'Camera',
-          onPress: async () => {
-            const result = await launchCamera({mediaType: 'photo'});
-            if (!result.didCancel) {
-              setFileName(result.assets[0]);
-              console.log(result.assets[0]);
-            }
-          },
+  Alert.alert(
+    'Upload File',
+    'Choose a method',
+    [
+      {
+        text: 'Camera',
+        onPress: async () => {
+          const result = await launchCamera({mediaType: 'photo'});
+          if (!result.didCancel) {
+            setFileName(result.assets[0]);
+            console.log(result.assets[0]);
+          }
         },
-        {
-          text: 'Gallery',
-          onPress: async () => {
-            const result = await launchImageLibrary({mediaType: 'mixed'});
-            if (!result.didCancel) {
-              setFileName(result.assets[0].fileName);
-              console.log(result.assets[0]);
-            }
-          },
+      },
+      {
+        text: 'Gallery',
+        onPress: async () => {
+          const result = await launchImageLibrary({mediaType: 'photo'});
+          if (!result.didCancel) {
+            setFileName(result.assets[0]); // ✅ FIXED — use whole object
+            console.log(result.assets[0]);
+          }
         },
-        {text: 'Cancel', style: 'cancel'},
-      ],
-      {cancelable: true},
-    );
-  };
+      },
+      {text: 'Cancel', style: 'cancel'},
+    ],
+    {cancelable: true},
+  );
+};
+
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -109,38 +110,48 @@ export default function AddExpense() {
     'Medical & First Aid',
   ];
 
-  const paymentModeOptions = ['Cash', 'Bank', 'Easypaisa', 'Jazzcash'];
+  const paymentModeOptions = ['cash', 'bank_transfer', 'easypaisa', 'jazzcash'];
   const users = staff;
 
-  const handleSave = async () => {
-    console.log('Values from state:', values);
+ const handleSave = async () => {
+  const db = await AsyncStorage.getItem('db_name');
 
-    const formData = new FormData();
+  const formData = new FormData();
 
-    formData.append('title', values.title);
-    formData.append('date_for', values.expenseDate);
-    formData.append('description', values.desc);
-    formData.append('payment_type', values.paymentMode);
-    formData.append('expense_type', values.expenseType);
-    formData.append('expense_made_by', values.user);
-    formData.append('if_other_expense_type', '');
-    formData.append('price', values.expensePrice);
-    formData.append('db_name', db);
+  formData.append('title', values.title);
+  formData.append('price', values.expensePrice);
+  formData.append('date_for', values.expenseDate); 
+  formData.append('payment_type', values.paymentMode);
+  formData.append('description', values.desc);
+  formData.append('expense_type', values.expenseType);
+  formData.append('expense_made_by', values.user);
+  formData.append('if_other_expense_type', '');
+  formData.append('db_name', db);
 
-    console.log('FormData contents:', formData);
+ if (fileName) {
+ formData.append('attachments[]', {
+  uri: fileName.uri,
+  type: fileName.type,
+  name: fileName.fileName || `upload-${Date.now()}.jpg`,
+});
 
-    try {
-      const response = await axios.post(`${ApiUrl}/api/expenses`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      console.log('Response:', response.data);
-      Alert.alert('Expense Added Successfully');
-    } catch (error) {
-      console.error('Error:', error.message);
-    }
-  };
+
+}
+
+
+  try {
+    const response = await axios.post(`${ApiUrl}/api/expenses`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    Alert.alert('Success', 'Expense Added Successfully');
+    console.log('Response:', response.data);
+  } catch (error) {
+    console.error('Upload error:', error.message);
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -187,19 +198,14 @@ export default function AddExpense() {
             value={new Date()}
             mode="date"
             display="default"
-            onChange={(event, selectedDate) => {
-              setShowDatePicker(false);
-              if (event.type === 'set' && selectedDate) {
-                const formattedDate = `${selectedDate
-                  .getDate()
-                  .toString()
-                  .padStart(2, '0')}-${(selectedDate.getMonth() + 1)
-                  .toString()
-                  .padStart(2, '0')}-${selectedDate.getFullYear()}`;
+           onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (event.type === 'set' && selectedDate) {
+             const formattedDate = selectedDate.toISOString().split('T')[0];
+              setValues(prev => ({ ...prev, expenseDate: formattedDate }));
+            }
+          }}
 
-                setValues(prev => ({...prev, expenseDate: formattedDate}));
-              }
-            }}
           />
         )}
 
@@ -238,11 +244,11 @@ export default function AddExpense() {
            <Text style={styles.saveBtnText}>Upload File</Text>
         </TouchableOpacity>
 
-        {fileName && (
-          <Text style={{marginTop: 10, color: 'green'}}>
-            Selected: {fileName}
-          </Text>
-        )}
+       {fileName && (
+  <Text style={{marginTop: 10, color: 'green'}}>
+    Selected: {fileName.uri}
+  </Text>
+)}
       </View>
 
       <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>

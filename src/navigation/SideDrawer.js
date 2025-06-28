@@ -56,12 +56,23 @@ export const SideDrawer = ({ drawerAnim, drawerOpen, closeDrawer, navigation }) 
     {
       label: 'Account',
       subpages: [
-        { label: 'Expenses', route: 'AddExpense' },
+        { label: 'Expenses', route: 'Expenses' },
       ],
     },
-
-
-
+    {
+      label: 'Organization',
+      subpages: [
+        { label: 'Organization', route: 'OrganizationProfile' },
+        { label: 'Payments', route: 'payments' },
+      ],
+    },
+    {
+      label: 'Reports',
+      subpages: [
+        { label: 'List', route: 'Reports' },
+        // { label: 'Payments', route: 'payments' },
+      ],
+    },
 
   ];
 

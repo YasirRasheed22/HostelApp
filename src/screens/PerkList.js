@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, SafeAreaView, FlatList, Image, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, SafeAreaView, FlatList, Image, TouchableOpacity, Alert } from 'react-native'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { ApiUrl } from '../../config/services'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -67,6 +67,9 @@ useLayoutEffect(()=>{
     },[navigation])
     const isFocused = useIsFocused();
     useEffect(()=>{
+     fetchAttendence();
+    },[isFocused])
+
      const fetchAttendence = async() => {
         try {
             const db  = await AsyncStorage.getItem('db_name');
@@ -81,15 +84,43 @@ useLayoutEffect(()=>{
             console.log(error.message)
         }
      };
-     fetchAttendence();
-    },[isFocused])
 
-    const handleEdit=(user)=>{
-        console.log(user);
+    const handleEdit=(id)=>{
+      console.log(id)
+              navigation.navigate('EditPerk', {id: id.id});
     }
-    const handleDelete=(user)=>{
-        console.log(user);
-    }
+    const handleDelete = async (user) => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/fees/perks/single/${user}`, {
+                data: {db_name: db},
+              });
+              console.log('Perk deleted successfully');
+              fetchAttendence();
+              
+              // Optional: refresh list or show success toast
+            } catch (error) {
+              console.error('Error deleting Perk:', error.message);
+              Alert.alert('Error', 'Failed to delete the Perk.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
   
     
   return (

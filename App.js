@@ -44,6 +44,17 @@ import AddPerk from './src/screens/AddPerk';
 import PerkList from './src/screens/PerkList';
 import FeeList from './src/screens/FeeList';
 import GenerateFee from './src/screens/GenerateFee';
+import OrganizationProfile from './src/screens/OrganizationProfile';
+import AddPayment from './src/screens/AddPayment';
+import Payments from './src/screens/payments';
+import ReportGen from './src/screens/ReportGen';
+import EditAsset from './src/screens/EditAsset';
+import FeeInvoiceScreen from './src/screens/FeeView';
+import EditPerk from './src/screens/EditPerk';
+import EditExpense from './src/screens/EditExpense';
+import EditPayment from './src/screens/EditPayment';
+import EditFee from './src/screens/EditFee';
+import EditLeave from './src/screens/EditLeave';
 // import Orientation from 'react-native-orientation-locker';
 
 const Stack = createNativeStackNavigator();
@@ -99,6 +110,17 @@ export default function App() {
         <Stack.Screen name="PerkList" component={PerkList}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen name="FeeList" component={FeeList}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen name="GenerateFee" component={GenerateFee}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="OrganizationProfile" component={OrganizationProfile}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="AddPayment" component={AddPayment}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="payments" component={Payments}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="ReportGen" component={ReportGen}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="EditAsset" component={EditAsset}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="FeeView" component={FeeInvoiceScreen}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="EditPerk" component={EditPerk}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="EditExpense" component={EditExpense}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="EditPayment" component={EditPayment}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="EditFee" component={EditFee}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="EditLeave" component={EditLeave}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen
           name="Dashboard"
           component={DashboardTabs}

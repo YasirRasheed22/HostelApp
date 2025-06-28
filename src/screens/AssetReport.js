@@ -7,13 +7,8 @@ export default function AssetReport() {
   return (
    <SafeAreaView style={styles.safeArea}>
          <ScrollView contentContainerStyle={styles.container}>
-           <View style={styles.titleRow}>
-             <Text style={styles.title}>Assets Report</Text>
-             <TouchableOpacity>
-               <AntDesign name="addfile" size={28} color="#4E4E5F" />
-             </TouchableOpacity>
-           </View>
-          <View style={styles.separator} />
+          
+          {/* <View style={styles.separator} /> */}
            
            </ScrollView>
            </SafeAreaView>

@@ -9,15 +9,15 @@ import {
   PermissionsAndroid,
   Platform,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import React, { useEffect, useState } from 'react';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
-import {Modal, PaperProvider, Portal, TextInput} from 'react-native-paper';
+import { Modal, PaperProvider, Portal, TextInput } from 'react-native-paper';
 import CheckBox from '@react-native-community/checkbox';
-import {font} from '../components/ThemeStyle';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
-import {ApiUrl} from '../../config/services';
+import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const facilitiesList = [
@@ -37,8 +37,8 @@ export default function EditStaff() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [salary, setSalary] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  // const [password, setPassword] = useState('');
+  // const [confirmPassword, setConfirmPassword] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
   const [role, setRole] = useState('');
@@ -49,25 +49,47 @@ export default function EditStaff() {
   const navigation = useNavigation();
 
   const route = useRoute();
-  const {id} = route.params;
+  const { id } = route.params;
   console.log(id)
-  useEffect(()=>{
-    const fetchstaff = async() => {
-        const db = await AsyncStorage.getItem('db_name');
-        try {
-            const response = await axios.put(`${ApiUrl}/api/users/single/${id}`)
-            console.log(response)
-        } catch (error) {
-            console.log(error.message)
+  useEffect(() => {
+    const fetchStaff = async () => {
+      const db = await AsyncStorage.getItem('db_name');
+      try {
+        const payload = {
+          db_name: db
         }
-    }
+        const response = await axios.put(`${ApiUrl}/api/users/single/${id}`, payload)
+        console.log(response)
+        const staff = response.data.users;
 
-    fetchstaff()
-  },[])
+        // Populate form fields
+        setName(staff.fullName || '');
+        setCnic(staff.cnic || '');
+        setPhone(staff.phone || '');
+        setEmail(staff.email || '');
+        setSalary(staff.salary?.toString() || '');
+        setEmergencyContact(staff.emergency_contact || '');
+        setPaymentDate(staff.payout_date || '');
+        setRole(staff.role || '');
+        setSelectedImage(staff.profile_image); // Load existing image if present
+
+        if (staff.rights) {
+          const selected = facilitiesList.filter(item => staff.rights[item.toLowerCase()]);
+          setSelectedFacilities(selected);
+          setCheckAll(selected.length === facilitiesList.length);
+        }
+
+      } catch (error) {
+        console.log('Fetch staff error:', error.message);
+      }
+    };
+
+    fetchStaff();
+  }, []);
 
   navigation.setOptions({
     headerTitle: 'Add Staff',
-    headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
+    headerTitleStyle: { fontSize: 15, fontFamily: font.secondary },
     //  headerRight:()=>{
     //          return(
     //            <View style={{ flexDirection: 'row' }}>
@@ -124,14 +146,14 @@ export default function EditStaff() {
 
   const handleImagePick = () => {
     Alert.alert('Choose Option', 'Camera or Gallery', [
-      {text: 'Take Photo', onPress: handleCameraLaunch},
-      {text: 'Choose Gallery', onPress: openImagePicker},
-      {text: 'Cancel', style: 'cancel'},
+      { text: 'Take Photo', onPress: handleCameraLaunch },
+      { text: 'Choose Gallery', onPress: openImagePicker },
+      { text: 'Cancel', style: 'cancel' },
     ]);
   };
 
   const openImagePicker = () => {
-    launchImageLibrary({mediaType: 'photo'}, response => {
+    launchImageLibrary({ mediaType: 'photo' }, response => {
       const uri = response.assets?.[0]?.uri;
       if (uri) setSelectedImage(uri);
     });
@@ -142,58 +164,76 @@ export default function EditStaff() {
       Alert.alert('Permission Denied', 'Camera access is required');
       return;
     }
-    launchCamera({mediaType: 'photo'}, response => {
+    launchCamera({ mediaType: 'photo' }, response => {
       const uri = response.assets?.[0]?.uri;
       if (uri) setSelectedImage(uri);
     });
   };
-
   const handleSave = async () => {
-    if (!name || !phone || !role || !password || password !== confirmPassword) {
+    if (!name || !phone || !role) {
       Alert.alert('Validation Error', 'Please fill all fields correctly.');
       return;
     }
-    const db_name =  await AsyncStorage.getItem('db_name');
-    const formData = new FormData();
 
-    formData.append('fullName', name);
-    formData.append('cnic', cnic);
-    formData.append('phone', phone);
-    formData.append('email', email);
-    formData.append('salary', salary);
-    formData.append('paymentCycle', paymentDate);
-    formData.append('password', password);
-    formData.append('role', role);
-    formData.append('db_name', db_name);
-    formData.append('emergency_contact', emergencyContact);
+    console.log('Calling update API...');
+
+    try {
+      const db_name = await AsyncStorage.getItem('db_name');
+      console.log('DB Name:', db_name);
+
+      const formData = new FormData();
+      formData.append('fullName', name);
+      formData.append('cnic', cnic);
+      formData.append('phone', phone);
+      formData.append('email', email);
+      formData.append('salary', salary);
+      formData.append('payout_date', paymentDate);
+      formData.append('role', role);
+      formData.append('db_name', db_name);
+      formData.append('emergency_contact', emergencyContact);
+
+      // Only add image if local
+      if (selectedImage) {
     formData.append('profile_image', {
-      uri: selectedImage, 
+      uri: selectedImage,
       name: 'profile.jpg',
       type: 'image/jpeg',
     });
+  }
 
-  const privilegesObj = {};
-facilitiesList.forEach(item => {
-  privilegesObj[item.toLowerCase()] = selectedFacilities.includes(item);
-});
-formData.append('privileges', JSON.stringify(privilegesObj));
-
-
-    try {
-      // console.log(formData);
-      const response = await axios.post(`${ApiUrl}/api/users`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const rightsObj = {};
+      facilitiesList.forEach(item => {
+        rightsObj[item.toLowerCase()] = selectedFacilities.includes(item);
       });
-      console.log(response);
-    } catch (error) {
-      console.log(error.message);
-    }
 
-    // Handle save logic here (API call or local state)
-    Alert.alert('Success', 'Staff member added!');
+      formData.append('privileges', JSON.stringify(rightsObj));
+
+      console.log(formData);
+
+      const response = await axios.put(
+        `${ApiUrl}/api/users/update/${id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          transformRequest: data => data, 
+        }
+      );
+
+      console.log('API Success:', response.data);
+      Alert.alert('Success', 'Staff updated successfully!');
+      navigation.goBack();
+    } catch (error) {
+      console.log('Caught error:', error.message);
+      if (error.response) {
+        console.log('Error Response:', error.response.data);
+      }
+      Alert.alert('Error', 'Something went wrong.');
+    }
   };
+
+
 
   return (
     <PaperProvider>
@@ -206,7 +246,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
         <View style={styles.imageContainer}>
           <TouchableOpacity onPress={handleImagePick}>
             {selectedImage ? (
-              <Image source={{uri: selectedImage}} style={styles.roundImage} />
+              <Image source={{ uri: selectedImage }} style={styles.roundImage} />
             ) : (
               <View style={styles.iconCircle}>
                 <EvilIcons name="image" size={50} color="#888" />
@@ -215,7 +255,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
           </TouchableOpacity>
         </View>
 
-        <View style={{gap: 12}}>
+        <View style={{ gap: 12 }}>
           <TextInput
             label="Full Name"
             value={name}
@@ -278,7 +318,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
               ))}
             </Modal>
           </Portal>
-
+          {/* 
           <TextInput
             label="Password"
             value={password}
@@ -294,7 +334,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
             secureTextEntry
             underlineColor="transparent"
             style={styles.input}
-          />
+          /> */}
 
           <TouchableOpacity
             onPress={() => setRoleModalVisible(true)}

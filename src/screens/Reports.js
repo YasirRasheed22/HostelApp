@@ -7,18 +7,39 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { font } from '../components/ThemeStyle';
+import axios from 'axios';
+import { ApiUrl } from '../../config/services';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+const formatDisplayDate = (reportDate) => {
+  if (!reportDate) return '';
+  const firstDate = reportDate.split('|')[0];
+  const date = new Date(firstDate);
+  if (isNaN(date)) return 'Invalid Date';
+
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+
+
+
 
 const ReportCard = ({user, onView, onDelete}) => (
   <View style={styles.card2} key={user.id}>
     <View style={styles.infoBox}>
-      <Text style={styles.name}>{user.name}</Text>
-      <Text>Date: {user.Date}</Text>
-      <Text>Created By: {user.CreatedBy}</Text>
+      <Text style={styles.name}>{user.reportType}</Text>
+      <Text>Date: {formatDisplayDate(user?.reportDate)}</Text>
+      <Text>Created By: {user?.user?.fullName}</Text>
     </View>
     <View style={styles.buttonContainer}>
       <TouchableOpacity onPress={() => onView(user)} style={styles.viewBtn}>
@@ -35,6 +56,43 @@ const ReportCard = ({user, onView, onDelete}) => (
 
 export default function Reports() {
   const navigation = useNavigation()
+  const [reportList , setReportList] = useState();
+  const [assetReport , setAssetReport] = useState([])
+  const [profitReport , setprofitReport] = useState()
+  const [inactiveTenant , setinactiveTenant] = useState()
+  const [activeTenant , setactiveTenant] = useState()
+
+  
+const isfocussed = useIsFocused();
+  useEffect(()=>{
+    const fetchReport = async() => {
+      const db = await AsyncStorage.getItem('db_name')
+      const payload = {
+        db_name : db
+      }
+      try {
+        const response = await axios.put(`${ApiUrl}/api/report` , payload);
+        console.log(response);
+        setReportList(response.data?.data)
+
+       const assetReport = response.data?.data.filter((i) => i.reportType === 'Assets Report');
+       const profitReport = response.data?.data.filter((i) => i.reportType === 'Profit and Loss Report');
+       const inactiveTenant = response.data?.data.filter((i) => i.reportType === 'InActive Tenants Report');
+       const activeTenant = response.data?.data.filter((i) => i.reportType === 'Active Tenants Report');
+        setAssetReport(assetReport);
+        setactiveTenant(activeTenant);
+        setinactiveTenant(inactiveTenant);
+        setprofitReport(profitReport);
+        
+      } catch (error) {
+          console.log(error.message)
+      }
+    }
+
+    fetchReport()
+  },[isfocussed])
+
+ 
   const handleView = user => {
     console.log('View:', user);
   };
@@ -44,33 +102,25 @@ export default function Reports() {
   };
 
   const reports = [
-    {label: 'Assets Reports', count: 1, icon: 'file-text-o' , comp:'AssetReport' },
-    {label: 'Active Tenants Reports', count: 2, icon: 'file-text-o' , comp:'ActiveTenantReport' },
-    {label: 'Inactive Tenants Reports', count: 10, icon: 'file-text-o' , comp:'InActiveTenantReport'},
-    {label: 'Profit and Loss Report', count: 3, icon: 'file-text-o' , comp:'ProfitAndLossReport'},
+    {label: 'Assets Reports', count: assetReport?.length, icon: 'file-text-o' , comp:'AssetReport' },
+    {label: 'Active Tenants Reports', count: activeTenant?.length, icon: 'file-text-o' , comp:'ActiveTenantReport' },
+    {label: 'Inactive Tenants Reports', count: inactiveTenant?.length, icon: 'file-text-o' , comp:'InActiveTenantReport'},
+    {label: 'Profit and Loss Report', count: profitReport?.length, icon: 'file-text-o' , comp:'ProfitAndLossReport'},
   ];
 
-  const reportList = [
-    {
-      id: 1,
-      name: 'Attendence Report',
-      Date: '30 Jan 2025',
-      CreatedBy: 'Staff Update',
-    },
-    {
-      id: 2,
-      name: 'Attendence Report',
-      Date: '30 Jan 2025',
-      CreatedBy: 'Staff Update',
-    },
-  ];
+  
+    
+
+  const handlePress = () => {
+    navigation.navigate('ReportGen')
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Reports</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handlePress}>
             <AntDesign name="addfile" size={28} color="#4E4E5F" />
           </TouchableOpacity>
         </View>

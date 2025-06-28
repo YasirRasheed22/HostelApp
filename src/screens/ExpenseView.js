@@ -45,15 +45,15 @@ export default function ExpenseView() {
             <Text style={styles.value}>{user?.date_for}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Payment Type::</Text>
+            <Text style={styles.label}>Payment Type:</Text>
             <Text style={styles.value}>{user?.payment_type}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Expense Made By::</Text>
+            <Text style={styles.label}>Expense Made By:</Text>
             <Text style={styles.value}>{user?.user?.fullName}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Expense Type::</Text>
+            <Text style={styles.label}>Expense Type:</Text>
             <Text style={styles.value}>{user?.expense_type}</Text>
           </View>
         </View>

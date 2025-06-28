@@ -43,7 +43,14 @@ export default function Attendence() {
   }
   const handleSubmit = (item) => {
     console.log(item)
-    navigation.navigate('AttendenceList' , {data:item?.data});
+    if (item.data === 'leave')
+    {
+      navigation.navigate('LeaveList' , {data: 'all'});
+    }else
+    {
+      navigation.navigate('AttendenceList' , {data:item?.data});
+    }
+    
   }
 
    navigation.setOptions({
