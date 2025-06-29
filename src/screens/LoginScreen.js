@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Text,
   TextInput,
@@ -9,6 +8,8 @@ import {
   Platform,
   SafeAreaView,
   Alert,
+  ActivityIndicator,
+  View,
 } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
@@ -17,35 +18,64 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiUrl } from '../../config/services';
 
-
 const LoginScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Check for existing user
+  useEffect(() => {
+    const checkUser = async () => {
+      const user = await AsyncStorage.getItem('user');
+      if (user) {
+        navigation.reset({
+          index:0,
+          routes:[{name:'Dashboard'}]
+        });
+      }
+      setLoading(false);
+    };
+    checkUser();
+  }, []);
 
   const handleLogin = async () => {
-  const payload = {
-    email: email,
-    password: password,
-  };
+    if (!email || !password) {
+      return Alert.alert('Please fill in all fields');
+    }
 
-  if (email && password) {
     try {
-      console.log(payload);
+      setLoading(true);
+      await AsyncStorage.clear();
+      const payload = { email, password };
       const response = await axios.post(`${ApiUrl}/api/helper/login`, payload);
-      AsyncStorage.setItem("db_name", (response.data.user.db_name));
-      AsyncStorage.setItem("user", JSON.stringify(response.data.user));
-      console.log("Database Name .............." , response.data.user.db_name)
-      navigation.navigate('Dashboard');
+
+      if (response.data?.user?.role === 'user') {
+        await AsyncStorage.setItem('privileges', JSON.stringify(response.data.user.privileges));
+      }
+
+      await AsyncStorage.setItem('db_name', response.data.user.db_name);
+      await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+
+      navigation.reset({
+          index:0,
+          routes:[{name:'Dashboard'}]
+        });
     } catch (error) {
       console.log(error);
-      Alert.alert("Login failed", error.response?.data?.message || error.message);
+      Alert.alert('Login failed', error.response?.data?.message || error.message);
+    } finally {
+      setLoading(false);
     }
-  } else {
-    Alert.alert('Please fill in all fields');
-  }
-};
+  };
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -53,7 +83,6 @@ const LoginScreen = () => {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Login to your hostel dashboard</Text>
 
@@ -91,28 +120,25 @@ const LoginScreen = () => {
 export default LoginScreen;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
+  },
   container: {
     flex: 1,
     padding: 24,
     backgroundColor: '#fff',
     justifyContent: 'center',
   },
-  image: {
-    width: '100%',
-    height: 180,
-    resizeMode: 'contain',
-    marginBottom: 24,
-  },
   title: {
     fontSize: 25,
-    // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
     color: '#333',
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
-    fontFamily:font.primary,
+    fontFamily: font.primary,
     marginBottom: 20,
   },
   input: {
@@ -133,18 +159,19 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    // fontWeight: 'bold',
     fontSize: 16,
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
   },
   linkText: {
     color: '#4f46e5',
     textAlign: 'center',
     marginTop: 10,
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
   },
-    safeArea: {
+  loaderContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#F9F9F9',
   },
 });

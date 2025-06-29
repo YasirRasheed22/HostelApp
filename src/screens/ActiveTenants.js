@@ -31,10 +31,10 @@ const UserCard = ({user, toggleStatus, onEdit, onView, onDelete}) => (
       </View>
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user.name}</Text>
-        <Text>Gender: {user.gender}</Text>
+        {/* <Text>Gender: {user.gender}</Text> */}
         <Text>Phone: {user.phone}</Text>
         <Text>Room No: {user.room}</Text>
-        <Text>Rent: {user.rent}</Text>
+        {/* <Text>Rent: {user.rent}</Text> */}
 
         {/* Status with touch */}
         {/* <TouchableOpacity onPress={() => toggleStatus(user.id, user.status)}>
@@ -84,9 +84,9 @@ export default function ActiveTenants() {
        headerRight:()=>{
                return(
                  <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity onPress={ToggleView} style={styles.topIcon}>
+                {/* <TouchableOpacity onPress={ToggleView} style={styles.topIcon}>
                     <AntDesign name="retweet" size={22} color="#fff" />
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
                   <AntDesign name="adduser" size={22} color="#fff" />
                 </TouchableOpacity>

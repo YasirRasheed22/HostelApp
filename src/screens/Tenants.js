@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import AntDesign1 from 'react-native-vector-icons/FontAwesome';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 // import AntDesign from 'react-native-vector-icons/AntDesign';
 
@@ -31,20 +32,24 @@ const UserCard = ({user, toggleStatus, onEdit, onView, onDelete}) => (
       </View>
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user.name}</Text>
-        <Text>Gender: {user.gender}</Text>
+        {/* <Text>Gender: {user.gender}</Text> */}
         <Text>Phone: {user.phone}</Text>
         <Text>Room No: {user.room}</Text>
-        <Text>Rent: {user.rent}</Text>
+        {/* <Text>Rent: {user.rent}</Text> */}
 
         {/* Status with touch */}
         <TouchableOpacity onPress={() => toggleStatus(user.id, user.status)}>
-          <Text
+          <View style ={{display:'flex', flexDirection:'row' , alignItems:'center', gap:8}}>
+               <Text
             style={[
               styles.status,
               user.status === 'Active' ? styles.active : styles.inactive,
             ]}>
-            Status: {user.status}
+            Status: {user.status}  
           </Text>
+            <AntDesign1 name='pencil' />
+          </View>
+         
         </TouchableOpacity>
       </View>
     </View>
@@ -85,9 +90,9 @@ export default function Tenants() {
     headerRight: () => {
       return (
         <View style={{flexDirection: 'row'}}>
-          <TouchableOpacity onPress={ToggleView} style={styles.topIcon}>
+          {/* <TouchableOpacity onPress={ToggleView} style={styles.topIcon}>
             <AntDesign name="retweet" size={22} color="#fff" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             onPress={() => navigation.navigate('AddTenant')}
             style={[styles.topIcon, {marginRight: 12}]}>

@@ -6,7 +6,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  PermissionsAndroid,
+  Platform,
+  Alert,
+  Linking,
 } from 'react-native';
+import RNFS from 'react-native-fs';
 import React, { useEffect, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -16,13 +21,10 @@ import axios from 'axios';
 import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 const formatDisplayDate = (reportDate) => {
   if (!reportDate) return '';
   const firstDate = reportDate.split('|')[0];
   const date = new Date(firstDate);
-  if (isNaN(date)) return 'Invalid Date';
-
   return date.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
@@ -30,11 +32,7 @@ const formatDisplayDate = (reportDate) => {
   });
 };
 
-
-
-
-
-const ReportCard = ({user, onView, onDelete}) => (
+const ReportCard = ({ user, onView, onDelete }) => (
   <View style={styles.card2} key={user.id}>
     <View style={styles.infoBox}>
       <Text style={styles.name}>{user.reportType}</Text>
@@ -43,92 +41,160 @@ const ReportCard = ({user, onView, onDelete}) => (
     </View>
     <View style={styles.buttonContainer}>
       <TouchableOpacity onPress={() => onView(user)} style={styles.viewBtn}>
-        <Text style={styles.btnText}>View</Text>
+       <Text style={styles.btnText}>
+          <FontAwesome name='download' />
+        </Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => onDelete(user.id)}
-        style={styles.deleteBtn}>
-        <Text style={styles.btnText}>Delete</Text>
+      <TouchableOpacity onPress={() => onDelete(user.id)} style={styles.deleteBtn}>
+        <Text style={styles.btnText}>
+          <AntDesign name='delete' />
+        </Text>
       </TouchableOpacity>
     </View>
   </View>
 );
 
 export default function Reports() {
-  const navigation = useNavigation()
-  const [reportList , setReportList] = useState();
-  const [assetReport , setAssetReport] = useState([])
-  const [profitReport , setprofitReport] = useState()
-  const [inactiveTenant , setinactiveTenant] = useState()
-  const [activeTenant , setactiveTenant] = useState()
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
+  const [reportList, setReportList] = useState([]);
+  const [assetReport, setAssetReport] = useState([]);
+  const [profitReport, setProfitReport] = useState([]);
+  const [inactiveTenant, setInactiveTenant] = useState([]);
+  const [activeTenant, setActiveTenant] = useState([]);
 
+  useEffect(() => {
   
-const isfocussed = useIsFocused();
-  useEffect(()=>{
-    const fetchReport = async() => {
-      const db = await AsyncStorage.getItem('db_name')
-      const payload = {
-        db_name : db
-      }
+
+    fetchReports();
+  }, [isFocused]);
+
+    const fetchReports = async () => {
+      const db = await AsyncStorage.getItem('db_name');
       try {
-        const response = await axios.put(`${ApiUrl}/api/report` , payload);
-        console.log(response);
-        setReportList(response.data?.data)
+        const res = await axios.put(`${ApiUrl}/api/report`, { db_name: db });
+        const reports = res.data?.data || [];
 
-       const assetReport = response.data?.data.filter((i) => i.reportType === 'Assets Report');
-       const profitReport = response.data?.data.filter((i) => i.reportType === 'Profit and Loss Report');
-       const inactiveTenant = response.data?.data.filter((i) => i.reportType === 'InActive Tenants Report');
-       const activeTenant = response.data?.data.filter((i) => i.reportType === 'Active Tenants Report');
-        setAssetReport(assetReport);
-        setactiveTenant(activeTenant);
-        setinactiveTenant(inactiveTenant);
-        setprofitReport(profitReport);
-        
+        setReportList(reports);
+        setAssetReport(reports.filter(r => r.reportType === 'Assets Report'));
+        setProfitReport(reports.filter(r => r.reportType === 'Profit and Loss Report'));
+        setInactiveTenant(reports.filter(r => r.reportType === 'InActive Tenants Report'));
+        setActiveTenant(reports.filter(r => r.reportType === 'Active Tenants Report'));
       } catch (error) {
-          console.log(error.message)
+        console.log('Fetch Error:', error.message);
       }
+    };
+
+  const requestStoragePermission = async () => {
+    if (Platform.OS !== 'android') return true;
+    if (Platform.Version >= 33) return true;
+
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch (err) {
+      console.warn(err);
+      return false;
     }
-
-    fetchReport()
-  },[isfocussed])
-
- 
-  const handleView = user => {
-    console.log('View:', user);
   };
 
-  const handleDelete = id => {
+  const downloadFile = async (fileUrl) => {
+    // const hasPermission = await requestStoragePermission();
+    // if (!hasPermission) {
+    //   Alert.alert('Permission Denied', 'Cannot download file without permission');
+    //   return;
+    // }
+
+    // const fileName = fileUrl.split('/').pop();
+    // const downloadPath = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+
+    // try {
+    //   const result = await RNFS.downloadFile({
+    //     fromUrl: fileUrl,
+    //     toFile: downloadPath,
+    //   }).promise;
+
+    //   if (result.statusCode === 200) {
+    //     Alert.alert('Success', `File downloaded to: Downloads folder`);
+    //   } else {
+    //     Alert.alert('Error', 'Download failed');
+    //   }
+    // } catch (err) {
+    //   console.error('Download Error:', err.message);
+    //   Alert.alert('Error', 'Something went wrong while downloading');
+    // }
+    Linking.openURL(fileUrl)
+  };
+
+  const handleView = (report) => {
+    if (report?.fileUrl) {
+      downloadFile(report.fileUrl);
+    } else {
+      Alert.alert('Error', 'File URL is missing');
+    }
+  };
+
+ const handleDelete = id => {
     console.log('Delete:', id);
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/report/${id}`, {
+                data: {db_name: db},
+              });
+              console.log('Report deleted successfully');
+              fetchReports();
+            } catch (error) {
+              console.error('Error deleting Report:', error.message);
+              Alert.alert('Error', 'Failed to delete the Report.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
-  const reports = [
-    {label: 'Assets Reports', count: assetReport?.length, icon: 'file-text-o' , comp:'AssetReport' },
-    {label: 'Active Tenants Reports', count: activeTenant?.length, icon: 'file-text-o' , comp:'ActiveTenantReport' },
-    {label: 'Inactive Tenants Reports', count: inactiveTenant?.length, icon: 'file-text-o' , comp:'InActiveTenantReport'},
-    {label: 'Profit and Loss Report', count: profitReport?.length, icon: 'file-text-o' , comp:'ProfitAndLossReport'},
+
+  const handleAddReport = () => {
+    navigation.navigate('ReportGen');
+  };
+
+  const summaryCards = [
+    { label: 'Assets Reports', count: assetReport?.length, icon: 'file-text-o', comp: 'AssetReport' },
+    { label: 'Active Tenants Reports', count: activeTenant?.length, icon: 'file-text-o', comp: 'ActiveTenantReport' },
+    { label: 'Inactive Tenants Reports', count: inactiveTenant?.length, icon: 'file-text-o', comp: 'InActiveTenantReport' },
+    { label: 'Profit and Loss Report', count: profitReport?.length, icon: 'file-text-o', comp: 'ProfitAndLossReport' },
   ];
-
-  
-    
-
-  const handlePress = () => {
-    navigation.navigate('ReportGen')
-  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Reports</Text>
-          <TouchableOpacity onPress={handlePress}>
+          <TouchableOpacity onPress={handleAddReport}>
             <AntDesign name="addfile" size={28} color="#4E4E5F" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.separator} />
+
         <View style={styles.cardList}>
-          {reports.map((item, index) => (
-            <TouchableOpacity onPress={()=>navigation.navigate(item.comp)} key={index} style={styles.card}>
+          {summaryCards.map((item, index) => (
+            <TouchableOpacity key={index} onPress={() => navigation.navigate(item.comp)} style={styles.card}>
               <View style={styles.iconWrapper}>
                 <View style={styles.icons}>
                   <FontAwesome name={item.icon} size={15} color="#fff" />
@@ -141,23 +207,18 @@ const isfocussed = useIsFocused();
             </TouchableOpacity>
           ))}
         </View>
+
         <View style={styles.container2}>
-    <Text style={styles.sectionTitle}>List</Text>
-    <View style={{ flexGrow: 1 }}>
-      <FlatList
-        scrollEnabled={false} // ✅ Important fix
-        data={reportList}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({ item }) => (
-          <ReportCard
-            user={item}
-            onView={handleView}
-            onDelete={handleDelete}
+          <Text style={styles.sectionTitle}>Generated Reports</Text>
+          <FlatList
+            scrollEnabled={false}
+            data={reportList}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <ReportCard user={item} onView={handleView} onDelete={handleDelete} />
+            )}
           />
-        )}
-      />
-    </View>
-  </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -171,80 +232,56 @@ const styles = StyleSheet.create({
   container: {
     padding: 24,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 25,
-    // fontWeight: 'bold',
     fontFamily: font.secondary,
-  },
-  subtitle: {
-    fontSize: 25,
-    marginTop: 10,
-    color: '#4E4E5F',
-    // fontWeight: 'bold',
-     fontFamily: font.secondary,
-  },
-  subheading: {
-    fontSize: 18,
-    marginTop: 5,
-    color: '#4E4E5F',
-    // fontWeight: 'bold',
-     fontFamily: font.secondary,
   },
   separator: {
     height: 1,
     backgroundColor: '#ccc',
-    marginTop: 10,
-    marginBottom: 20,
+    marginVertical: 20,
   },
   sectionTitle: {
     fontSize: 20,
-    // fontWeight: 'bold',
-     fontFamily: font.secondary,
-    marginTop: 10,
-    marginBottom: 10,
+    fontFamily: font.secondary,
     color: '#4E4E5F',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 10,
   },
   cardList: {
-    marginTop: 10,
-    display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
   },
   card: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
     width: '48%',
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 10,
     padding: 16,
     marginBottom: 12,
     alignItems: 'center',
   },
   iconWrapper: {
     width: '30%',
-    justifyContent: 'center',
     alignItems: 'center',
   },
   textWrapper: {
     width: '70%',
   },
   cardTitle: {
-    color: '#7CB33D',
     fontSize: 13,
+    color: '#7CB33D',
     fontFamily: font.secondary,
-    // fontWeight: '600',
   },
   cardCount: {
-    color: '#7CB33D',
     fontSize: 13,
-    // fontWeight: 'bold',
-     fontFamily: font.secondary,
+    fontFamily: font.secondary,
+    color: '#7CB33D',
     marginTop: 4,
   },
   icons: {
@@ -252,45 +289,8 @@ const styles = StyleSheet.create({
     height: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 10,
     backgroundColor: '#75AB38',
-  },
-  topContainer: {
-    backgroundColor: '#fff',
-    padding: 15,
     borderRadius: 10,
-  },
-  infoBox: {
-    width: '80%',
-  },
-  name: {
-    fontSize: 18,
-    // fontWeight: 'bold',
-    fontFamily: font.secondary,
-    marginBottom: 6,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'flex-end',
-  },
-  viewBtn: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  deleteBtn: {
-    backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  btnText: {
-    color: 'white',
-    // fontWeight: 'bold',
-     fontFamily: font.secondary,
   },
   card2: {
     backgroundColor: '#fff',
@@ -298,6 +298,37 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 10,
     elevation: 3,
+  },
+  infoBox: {
+    width: '80%',
+  },
+  name: {
+    fontSize: 18,
+    fontFamily: font.secondary,
+    marginBottom: 6,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 10,
+  },
+   viewBtn: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 15,
+    paddingHorizontal: 19,
+    borderRadius: 6,
+    marginRight: 10,
+  },
+  deleteBtn: {
+    backgroundColor: '#f44336',
+    paddingVertical: 15,
+    paddingHorizontal: 19,
+    borderRadius: 6,
+    marginRight: 10,
+  },
+  btnText: {
+    color: 'white',
+    fontFamily: font.secondary,
   },
   container2: {
     marginTop: 20,

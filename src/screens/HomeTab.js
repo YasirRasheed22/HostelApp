@@ -13,7 +13,7 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Entypo from 'react-native-vector-icons/Entypo';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { BarChart } from 'react-native-chart-kit';
 import { font } from '../components/ThemeStyle';
 import axios from 'axios';
@@ -28,11 +28,13 @@ export default function HomeTab() {
 
   const [counter, setCounter] = useState();
   const [counter1, setCounter1] = useState();
+  const [allowedTabs, setAllowedTabs] = useState([]);
   const [WeeklyExpenses, setWeeklyExpenses] = useState({ labels: [], datasets: [] });
   const [WeeklyFees, setWeeklyFee] = useState({ labels: [], datasets: [] });
 
   const navigation = useNavigation();
 
+  const isFocussed = useIsFocused()
   useEffect(() => {
     const getGreeting = () => {
       const hour = new Date().getHours();
@@ -57,6 +59,7 @@ export default function HomeTab() {
       try {
         const db = await AsyncStorage.getItem('db_name');
         const response = await axios.put(`${ApiUrl}/api/users/dashboard`, { db_name: db });
+        console.log(response)
         setCounter(response.data?.array);
       } catch (error) {
         console.log(error.message);
@@ -76,6 +79,21 @@ export default function HomeTab() {
       }
     };
 
+    const fetchprevileges = async() => {
+       try {
+        const data = await AsyncStorage.getItem('privileges');
+        if (data) {
+          const parsed = JSON.parse(data);
+          setAllowedTabs(parsed);
+        } else {
+          setAllowedTabs(null); // Show all if not found
+        }
+      } catch (error) {
+        console.error('Failed to load privileges:', error);
+        setAllowedTabs(null); // Fail-safe: show all
+      }
+    }
+
     const fetchGraphFees = async () => {
       try {
         const db = await AsyncStorage.getItem('db_name');
@@ -94,18 +112,26 @@ export default function HomeTab() {
     fetchRecord();
     fetchGraphExpense();
     fetchGraphFees();
-  }, []);
+    fetchprevileges();
+  }, [isFocussed]);
 
   const stats = [
-    { label: 'Active Tenants', count: counter?.activeTenants, icon: 'file-text-o', comp: 'ActiveMember' },
-    { label: 'Inactive Tenants', count: counter?.tenants - counter?.activeTenants, icon: 'check-square-o', comp: 'InactiveMember' },
-    { label: 'Rooms', count: counter?.rooms, icon: 'exchange', comp: 'Rooms' },
-    { label: 'Staff Members', count: counter?.user, icon: 'exchange', comp: 'StaffMember' },
-    { label: 'Receivable Amount', count: counter?.receivedAmount, icon: 'exchange' },
-    { label: 'Received Amount', count: counter?.receiveableAmount, icon: 'exchange' },
-    { label: 'Vacant Rooms', count: counter?.vacantRooms, icon: 'exchange' },
-    { label: 'Filled Rooms', count: counter?.filledRooms, icon: 'exchange' },
+    { label: 'Active Tenants',  key: 'tenants', count: counter?.activeTenants, icon: 'file-text-o', comp: 'ActiveMember' },
+    { label: 'Inactive Tenants', key: 'tenants', count: counter?.tenants - counter?.activeTenants, icon: 'check-square-o', comp: 'InactiveMember' },
+    { label: 'Rooms',  key: 'rooms',count: counter?.rooms, icon: 'exchange', comp: 'Rooms' },
+    { label: 'Staff Members', key:'staff', count: counter?.user, icon: 'exchange', comp: 'StaffMember' },
+    { label: 'Receivable Amount',key:'accounts', count: counter?.receivedAmount, icon: 'exchange' },
+    { label: 'Received Amount' ,key:'accounts', count: counter?.receiveableAmount, icon: 'exchange' },
+    { label: 'Vacant Rooms', key: 'rooms', count: counter?.vacantRooms, icon: 'exchange' },
+    { label: 'Filled Rooms', key: 'rooms', count: counter?.filledRooms, icon: 'exchange' },
   ];
+
+  const filteredStats = stats.filter((item) => {
+  if (!allowedTabs) return true;           // If no restriction, show all
+  if (!item.key) return true;              // If item has no key, always show
+  return allowedTabs[item.key];            // Check privilege
+});
+
 
   const attendance = [
     { label: 'In', count: counter1?.presentCount, comp: 'Attendance' },
@@ -159,7 +185,7 @@ export default function HomeTab() {
 
           <Text style={styles.sectionTitle}>Stats</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-            {stats.map((item, index) => (
+            {filteredStats.map((item, index) => (
               <TouchableOpacity
                 key={index}
                 style={[styles.card, styles.horizontalCard]}
@@ -191,23 +217,29 @@ export default function HomeTab() {
             ))}
           </ScrollView>
 
-          <Text style={styles.sectionTitle}>Attendance</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-            {attendance.map((item, index) => (
-              <TouchableOpacity key={index} style={[styles.card, styles.horizontalCard]} onPress={() => navigation.navigate(item.comp)}>
-                <View style={styles.iconWrapper}>
-                  <View style={styles.icons}>
-                    <Entypo name="cycle" size={26} color="#fff" />
-                  </View>
-                </View>
-                <View style={styles.textWrapper}>
-                  <Text style={styles.cardTitle}>{item.label}</Text>
-                  <Text style={styles.cardCount}>{item.count}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+         {(!allowedTabs || allowedTabs.attendance) && (
+  <>
+    <Text style={styles.sectionTitle}>Attendance</Text>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+      {attendance.map((item, index) => (
+        <TouchableOpacity key={index} style={[styles.card, styles.horizontalCard]} onPress={() => navigation.navigate(item.comp)}>
+          <View style={styles.iconWrapper}>
+            <View style={styles.icons}>
+              <Entypo name="cycle" size={26} color="#fff" />
+            </View>
+          </View>
+          <View style={styles.textWrapper}>
+            <Text style={styles.cardTitle}>{item.label}</Text>
+            <Text style={styles.cardCount}>{item.count}</Text>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  </>
+)}
 
+     {(!allowedTabs || allowedTabs.accounts) && (
+  <>
           {WeeklyExpenses.datasets.length > 0 && (
             <>
               <Text style={styles.sectionTitle}>Charts</Text>
@@ -236,6 +268,7 @@ export default function HomeTab() {
               </ScrollView>
             </>
           )}
+         
 
           {WeeklyFees.datasets.length > 0 && (
             <>
@@ -264,6 +297,7 @@ export default function HomeTab() {
               </ScrollView>
             </>
           )}
+           </>)}
         </ScrollView>
       </View>
     </SafeAreaView>

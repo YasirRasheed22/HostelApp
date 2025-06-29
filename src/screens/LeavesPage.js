@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { font } from '../components/ThemeStyle';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
@@ -59,11 +59,13 @@ export default function LeavePage() {
   const [counter , setCount] = useState();
   const [users , setUsers] = useState();
 
+  const isFocussed = useIsFocused();
+
+
   useEffect(()=>{
     
-
     fetchRecord();
-  },[])
+  },[isFocussed])
 
   const fetchRecord = async() => {
       const db = await AsyncStorage.getItem('db_name');
@@ -155,9 +157,38 @@ console.log("on edit click" ,user)
 navigation.navigate('EditLeave' , {id: user?.id})
 };
 
-const handleDelete = (id) => {
-  console.log(`Delete user with id ${id}`);
-};
+ const handleDelete = id => {
+    console.log('Delete:', id);
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/leave/${id}`, {
+                data: {db_name: db},
+              });
+              console.log('Leave deleted successfully');
+              fetchRecord();
+            } catch (error) {
+              console.error('Error deleting Leave:', error.message);
+              Alert.alert('Error', 'Failed to delete the Leave.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>

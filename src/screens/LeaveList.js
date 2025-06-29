@@ -33,7 +33,7 @@ const UserCard = ({ user, toggleStatus, onEdit, onDelete }) => (
           <Text
             style={[
               styles.status,
-              user.status === 'Active' ? styles.active : styles.inactive,
+              user.status === 'approved' ? styles.active : styles.inactive,
             ]}>
             Status: {user.status}
           </Text>
@@ -76,7 +76,11 @@ export default function LeaveList() {
   }
 
   useEffect(() => {
-    const fetchRecord = async () => {
+   
+    fetchRecord();
+  }, [])
+
+   const fetchRecord = async () => {
       const db = await AsyncStorage.getItem('db_name');
       try {
         const payload = {
@@ -92,8 +96,6 @@ export default function LeaveList() {
       }
     }
 
-    fetchRecord();
-  }, [])
 
   const handlePress = () => {
     navigation.navigate('ApplyLeave')
@@ -123,11 +125,11 @@ export default function LeaveList() {
       [
         {
           text: 'Approved',
-          onPress: () => updateStatus(id, 'Approved'),
+          onPress: () => updateStatus(id, 'approved'),
         },
         {
           text: 'Rejected',
-          onPress: () => updateStatus(id, 'Rejected'),
+          onPress: () => updateStatus(id, 'rejected'),
         },
         {
           text: 'Cancel',
@@ -148,12 +150,42 @@ export default function LeaveList() {
 
 
   const handleEdit = (user) => {
-    console.log("on edit click", user)
+console.log("on edit click" ,user)
+navigation.navigate('EditLeave' , {id: user?.id})
+};
+
+ const handleDelete = id => {
+    console.log('Delete:', id);
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/leave/${id}`, {
+                data: {db_name: db},
+              });
+              console.log('Leave deleted successfully');
+              fetchRecord();
+            } catch (error) {
+              console.error('Error deleting Leave:', error.message);
+              Alert.alert('Error', 'Failed to delete the Leave.');
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
-  const handleDelete = (id) => {
-    console.log(`Delete user with id ${id}`);
-  };
 
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -84,6 +84,8 @@ export default function AddTenant() {
   const [state, setState] = useState('');
   const [occupationAddress, setOccupationAddress] = useState('');
   const [properties, setProperties] = useState([]);
+  const [guardians, setGuardians] = useState([]);
+
   const navigation = useNavigation();
 
   const handleAddProperty = () => {
@@ -162,6 +164,12 @@ export default function AddTenant() {
   };
 
   const handleSubmit = async () => {
+
+    if(!selectedImage)
+    {
+      Alert.alert('Please add image');
+      return;
+    }
     const db = await AsyncStorage.getItem('db_name');
 
     const formData = new FormData();
@@ -191,11 +199,12 @@ export default function AddTenant() {
       name: 'profile.jpg',
       type: 'image/jpeg',
     });
-    // For array fields like `guardians`, stringify them if backend expects JSON string
-    formData.append('guardians', JSON.stringify([]));
+   
+   formData.append('guardians', JSON.stringify(guardians));
+
 
     console.log(formData);
-    // console.log(selectedImage);
+    
 
     try {
       const response = await axios.post(`${ApiUrl}/api/tenants/`, formData, {
@@ -214,9 +223,7 @@ export default function AddTenant() {
   return (
     <PaperProvider>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* <Text style={styles.title}>Add Tenant</Text> */}
-        {/* <View style={styles.separator} /> */}
-
+       
         <Text style={styles.sectionTitle}>Personal Information</Text>
 
         <View style={styles.imageContainer}>
@@ -517,10 +524,23 @@ export default function AddTenant() {
                 <Button
                   mode="contained"
                   style={styles.button}
-                  onPress={() => {
-                    // You can handle save logic here
-                    setModalVisible(false);
-                  }}>
+                 onPress={() => {
+                  const newGuardian = {
+                    name: fullName,
+                    phone: phone1,
+                    relation,
+                    // address: '', // you can add a separate field if needed
+                    cnic: cnic1,
+                  };
+
+                  setGuardians(prev => [...prev, newGuardian]);
+                  // Clear fields after saving
+                  setFullName('');
+                  setPhone1('');
+                  setRelation('');
+                  setCnic1('');
+                  setModalVisible(false);
+                }}>
                   Save
                 </Button>
               </View>
