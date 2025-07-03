@@ -202,10 +202,10 @@ export default function TenantView() {
   const renderGuardianInfo = () => (
     <>
       <Text style={styles.sectionTitle}>Guardian Information</Text>
-      <View style={styles.card}>
+      <View style={{}}>
         {user?.guardian?.length > 0 ? (
           user.guardian.map((g, index) => (
-            <View key={index} style={{ marginBottom: 10 }}>
+            <View key={index} style={[ styles.card ,{marginBottom: 10} ]}>
               <Row label="Name" value={g.name} />
               <Row onPress={() => Linking.openURL(`tel:${user?.phone}`)} label="Phone" value={g.phone} />
               <Row label="Relation" value={g.relation} />

@@ -50,9 +50,10 @@ export default function EditTenant() {
     paymentCycleDate: '',
     rentForRoom: '',
   });
-  
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [deletedGuardians, setDeletedGuardians] = useState([]);
   const [modalVisible1, setModalVisible1] = useState(false);
   const [fullName, setFullName] = useState('');
   const [cnic1, setCnic1] = useState('');
@@ -60,7 +61,7 @@ export default function EditTenant() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-  const [modalType, setModalType] = useState('danger'); 
+  const [modalType, setModalType] = useState('danger');
   const [phone1, setPhone1] = useState('');
   const [roomRent, setRoomRent] = useState('');
   const [messStatus, setMessStatus] = useState('no');
@@ -83,37 +84,47 @@ export default function EditTenant() {
       const payload = { db_name: db };
       try {
         const response = await axios.post(`${ApiUrl}/api/tenants/single/${id}`, payload);
-        console.log(response)
         const tenant = response.data.tenant;
 
-        const loadedProperties = tenant.property_info 
-      ? JSON.parse(tenant.property_info) 
-      : [];
-    
-    setProperties(loadedProperties);
+        const loadedProperties = tenant.property_info
+          ? JSON.parse(tenant.property_info)
+          : [];
 
+        setProperties(loadedProperties);
         setSelectedImage(tenant.profile_image);
         setUser({
           ...tenant,
           dob: tenant.dob ? new Date(tenant.dob) : new Date(),
         });
         setMessStatus(tenant.mess_status || 'no');
-        setGuardians(tenant.guardian || []);
+
+        // Load guardians with their IDs
+        setGuardians(tenant.guardian?.map(g => ({
+          id: g.id,
+          name: g.name,
+          cnic: g.cnic,
+          phone: g.phone,
+          relation: g.relation
+        })) || []);
+
         setRoom(tenant.room?.id || null);
         setRoomRent(String(tenant.rentForRoom || ''));
         setPaymentDate(String(tenant.paymentCycleDate || ''));
-        
+
         // Fetch available rooms
-        const roomsResponse = await axios.post(`${ApiUrl}/api/rooms/all`, payload);
-        setAvailableRooms(roomsResponse.data.rooms);
+        const roomsResponse = await axios.put(`${ApiUrl}/api/rooms`, payload);
+        setAvailableRooms(roomsResponse.data.data);
       } catch (error) {
         console.log('Error fetching user:', error.message);
-      }finally{
+        setModalType('danger');
+        setModalMessage('Failed to load tenant data');
+        setModalVisible(true);
+      } finally {
         setLoading(false);
       }
     };
     fetchUser();
-  }, [id , isFocussed]);
+  }, [id, isFocussed]);
 
   const handleImagePick = () => {
     Alert.alert('Choose Option', 'Camera or Gallery', [
@@ -142,11 +153,13 @@ export default function EditTenant() {
   };
 
   const handleSubmit = async () => {
-    
+    if (loading) return;
+
     setLoading(true);
     const db = await AsyncStorage.getItem('db_name');
     const formData = new FormData();
 
+    // Basic tenant info
     formData.append('name', user.name || '');
     formData.append('phone', user.phone || '');
     formData.append('cnic', user.cnic || '');
@@ -166,14 +179,19 @@ export default function EditTenant() {
     formData.append('mess_status', messStatus || '');
     formData.append('mess_title', user.mess_title || '');
     formData.append('mess_price', user.mess_price || '');
-    guardians.forEach((guardian, index) => {
-  formData.append(`guardians[${index}][name]`, guardian.name);
-  formData.append(`guardians[${index}][cnic]`, guardian.cnic);
-  formData.append(`guardians[${index}][phone]`, guardian.phone);
-  formData.append(`guardians[${index}][relation]`, guardian.relation);
-});
 
-     formData.append('property_info', JSON.stringify(properties));
+    // Handle guardians - preserve existing and add new
+    guardians.forEach((guardian, index) => {
+      if (guardian.id) {
+        formData.append(`guardians[${index}][id]`, guardian.id);
+      }
+      formData.append(`guardians[${index}][name]`, guardian.name);
+      formData.append(`guardians[${index}][cnic]`, guardian.cnic);
+      formData.append(`guardians[${index}][phone]`, guardian.phone);
+      formData.append(`guardians[${index}][relation]`, guardian.relation);
+    });
+
+    formData.append('property_info', JSON.stringify(properties));
 
     if (selectedImage && !selectedImage.startsWith('http')) {
       formData.append('profile_image', {
@@ -182,24 +200,37 @@ export default function EditTenant() {
         type: 'image/jpeg',
       });
     }
-  
-    console.log(formData);
+
     try {
+      if (deletedGuardians.length > 0) {
+        await Promise.all(
+          deletedGuardians.map(async (id) => {
+            try {
+              const res = await axios.delete(`${ApiUrl}/api/tenants/guardian/${id}`, {
+                data: { db_name: db }
+              });
+              console.log(res)
+            } catch (error) {
+              console.error('Error deleting guardian:', error);
+              // Continue even if deletion fails for some
+            }
+          })
+        );
+      }
       const response = await axios.put(`${ApiUrl}/api/tenants/update/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      console.log('API response', response.data);
       setModalType('success');
-        setModalMessage('Tenant updated Successfully');
-        setModalVisible(true);
+      setModalMessage('Tenant updated successfully');
+      setModalVisible(true);
       navigation.goBack();
     } catch (error) {
       console.log('Error:', error?.response?.data || error.message);
-       setModalType('danger');
-        setModalMessage('Failed');
-        setModalVisible(true);
-    }finally{
+      setModalType('danger');
+      setModalMessage(error?.response?.data?.message || 'Failed to update tenant');
+      setModalVisible(true);
+    } finally {
       setLoading(false);
     }
   };
@@ -207,11 +238,28 @@ export default function EditTenant() {
   const handleAddGuardian = () => {
     if (!fullName || !cnic1 || !phone1 || !relation) {
       setModalType('danger');
-        setModalMessage('Invalid Credentials..');
-        setModalVisible(true);
+      setModalMessage('Please fill all guardian fields');
+      setModalVisible(true);
       return;
     }
-    setGuardians(prev => [...prev, { name: fullName, cnic: cnic1, phone: phone1, relation }]);
+
+    // Check for duplicate CNIC
+    if (guardians.some(g => g.cnic === cnic1)) {
+      setModalType('danger');
+      setModalMessage('Guardian with this CNIC already exists');
+      setModalVisible(true);
+      return;
+    }
+
+    setGuardians(prev => [...prev, {
+      name: fullName,
+      cnic: cnic1,
+      phone: phone1,
+      relation
+      // Note: No ID for new guardians
+    }]);
+
+    // Reset form
     setFullName('');
     setCnic1('');
     setPhone1('');
@@ -219,7 +267,15 @@ export default function EditTenant() {
     setModalVisible1(false);
   };
 
-  const handleRemoveGuardian = (index) => {
+  const handleRemoveGuardian = async (index) => {
+    const guardianToRemove = guardians[index];
+
+    // If it's an existing guardian (has ID), add to deleted list
+    if (guardianToRemove.id) {
+      setDeletedGuardians(prev => [...prev, guardianToRemove.id]);
+    }
+
+    // Remove from local state
     const updatedGuardians = [...guardians];
     updatedGuardians.splice(index, 1);
     setGuardians(updatedGuardians);
@@ -256,7 +312,7 @@ export default function EditTenant() {
   const handleAddProperty = () => {
     setProperties([...properties, '']);
   };
-if (loading) {
+  if (loading) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color="#75AB38" />
@@ -266,12 +322,12 @@ if (loading) {
   return (
     <PaperProvider>
       <ScrollView contentContainerStyle={styles.container}>
-         <AlertModal
-  visible={modalVisible}
-  onDismiss={() => setModalVisible(false)}
-  message={modalMessage}
-  type={modalType}
-/>
+        <AlertModal
+          visible={modalVisible}
+          onDismiss={() => setModalVisible(false)}
+          message={modalMessage}
+          type={modalType}
+        />
         <Text style={styles.sectionTitle}>Personal Information</Text>
 
         <View style={styles.imageContainer}>
@@ -322,6 +378,7 @@ if (loading) {
             value={String(user.securityFees)}
             onChangeText={(text) => setUser(prev => ({ ...prev, securityFees: text }))}
             style={styles.input}
+            keyboardType='numeric'
             underlineColor="transparent"
           />
 
@@ -498,14 +555,14 @@ if (loading) {
               {paymentDate || user.paymentCycleDate || 'Select Payment Date'}
             </Text>
           </TouchableOpacity>
-            <Portal>
+          <Portal>
             <Modal
               visible={paymentDateModalVisible}
               onDismiss={() => setPaymentDateModalVisible(false)}
               contentContainerStyle={styles.modalContainer}>
-              
+
               <Text style={styles.modalTitle}>Select Payment Date</Text>
-          
+
               <ScrollView style={{ maxHeight: 200 }}>
                 {Array.from({ length: 30 }, (_, i) =>
                   (i + 1).toString().padStart(2, '0'),
@@ -521,7 +578,7 @@ if (loading) {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-          
+
             </Modal>
           </Portal>
 
@@ -535,20 +592,21 @@ if (loading) {
           />
 
           <Text style={styles.sectionTitle}>Guardian Information</Text>
+
           {guardians.map((guardian, index) => (
             <View key={index} style={styles.guardianItem}>
               <Text>Name: {guardian.name}</Text>
               <Text>CNIC: {guardian.cnic}</Text>
               <Text>Phone: {guardian.phone}</Text>
               <Text>Relation: {guardian.relation}</Text>
-              <TouchableOpacity 
-                style={styles.deleteButton} 
+              <TouchableOpacity
+                style={styles.deleteButton}
                 onPress={() => handleRemoveGuardian(index)}>
                 <Text style={styles.deleteButtonText}>Remove</Text>
               </TouchableOpacity>
             </View>
           ))}
-          
+
           <Button
             style={styles.button}
             mode="contained"
@@ -581,19 +639,19 @@ if (loading) {
               />
 
               <TextInput
-                label="Relation"
-                value={relation}
-                onChangeText={setRelation}
-                style={styles.input}
-                underlineColor="transparent"
-              />
-
-              <TextInput
                 label="Phone Number"
                 value={phone1}
                 onChangeText={setPhone1}
                 style={styles.input}
                 keyboardType="phone-pad"
+                underlineColor="transparent"
+              />
+
+              <TextInput
+                label="Relation"
+                value={relation}
+                onChangeText={setRelation}
+                style={styles.input}
                 underlineColor="transparent"
               />
 
@@ -610,29 +668,29 @@ if (loading) {
           </Portal>
 
           <Text style={styles.sectionTitle}>Mess Information</Text>
-         <View style={{ flexDirection: 'row', gap: 10 }}>
-                     <TouchableOpacity
-                       style={[
-                         styles.button1,
-                         messStatus === 'yes'
-                           ? { backgroundColor: '#75AB38' }
-                           : { backgroundColor: '#fff', borderWidth: 1, borderColor: '#75AB38' },
-                       ]}
-                       onPress={() => setMessStatus('yes')}>
-                       <Text style={{ color: messStatus === 'yes' ? '#fff' : '#75AB38' }}>YES</Text>
-                     </TouchableOpacity>
-         
-                     <TouchableOpacity
-                       style={[
-                         styles.button2,
-                         messStatus === 'no'
-                           ? { backgroundColor: '#75AB38' }
-                           : { backgroundColor: '#fff', borderWidth: 1, borderColor: '#75AB38' },
-                       ]}
-                       onPress={() => setMessStatus('no')}>
-                       <Text style={{ color: messStatus === 'no' ? '#fff' : '#75AB38' }}>NO</Text>
-                     </TouchableOpacity>
-                   </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity
+              style={[
+                styles.button1,
+                messStatus === 'yes'
+                  ? { backgroundColor: '#75AB38' }
+                  : { backgroundColor: '#fff', borderWidth: 1, borderColor: '#75AB38' },
+              ]}
+              onPress={() => setMessStatus('yes')}>
+              <Text style={{ color: messStatus === 'yes' ? '#fff' : '#75AB38' }}>YES</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.button2,
+                messStatus === 'no'
+                  ? { backgroundColor: '#75AB38' }
+                  : { backgroundColor: '#fff', borderWidth: 1, borderColor: '#75AB38' },
+              ]}
+              onPress={() => setMessStatus('no')}>
+              <Text style={{ color: messStatus === 'no' ? '#fff' : '#75AB38' }}>NO</Text>
+            </TouchableOpacity>
+          </View>
           {messStatus === 'yes' ? (
             <>
               <TextInput
@@ -653,31 +711,31 @@ if (loading) {
             </>
           ) : null}
 
-         <Text style={styles.sectionTitle}>Property Information</Text>
-<View style={{ alignItems: 'flex-end', marginBottom: 17 }}>
-  <TouchableOpacity
-    style={styles.button3}
-    onPress={handleAddProperty}>
-    <Text style={styles.buttonText}>Add +</Text>
-  </TouchableOpacity>
-</View>
+          <Text style={styles.sectionTitle}>Property Information</Text>
+          <View style={{ alignItems: 'flex-end', marginBottom: 17 }}>
+            <TouchableOpacity
+              style={styles.button3}
+              onPress={handleAddProperty}>
+              <Text style={styles.buttonText}>Add +</Text>
+            </TouchableOpacity>
+          </View>
 
-{properties.map((property, index) => (
-  <View key={index} style={styles.propertyItem}>
-    <TextInput
-      label={`Property ${index + 1}`}
-      value={property}
-      onChangeText={text => handlePropertyChange(text, index)}
-      style={[styles.input, { flex: 1 }]}
-      underlineColor="transparent"
-    />
-    <TouchableOpacity
-      onPress={() => handleRemoveProperty(index)}
-      style={styles.deleteButton}>
-      <Text style={styles.deleteButtonText}>X</Text>
-    </TouchableOpacity>
-  </View>
-))}
+          {properties.map((property, index) => (
+            <View key={index} style={styles.propertyItem}>
+              <TextInput
+                label={`Property ${index + 1}`}
+                value={property}
+                onChangeText={text => handlePropertyChange(text, index)}
+                style={[styles.input, { flex: 1 }]}
+                underlineColor="transparent"
+              />
+              <TouchableOpacity
+                onPress={() => handleRemoveProperty(index)}
+                style={styles.deleteButton}>
+                <Text style={styles.deleteButtonText}>X</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
         <TouchableOpacity style={styles.saveBtn} onPress={handleSubmit}>
           <Text style={styles.saveBtnText}>Update</Text>
@@ -718,7 +776,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#75AB38',
   },
-    loaderContainer: {
+  loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',

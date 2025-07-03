@@ -173,76 +173,189 @@ export default function AddTenant() {
     });
   };
 
-  const handleSubmit = async () => {
-    if (!selectedImage) {
-      setModalType('danger');
-      setModalMessage('Upload Image');
-      setModalVisible(true);
-      return;
-    }
-    setLoading(true);
-    const db = await AsyncStorage.getItem('db_name');
+const handleSubmit = async () => {
+  // Validate all required fields
+  if (!selectedImage) {
+    setModalType('danger');
+    setModalMessage('Please upload tenant image');
+    setModalVisible(true);
+    return;
+  }
 
-    const formData = new FormData();
+  if (!name) {
+    setModalType('danger');
+    setModalMessage('Please enter full name');
+    setModalVisible(true);
+    return;
+  }
 
-    // Add all the fields to formData
-    formData.append('name', name);
-    formData.append('phone', phone);
-    formData.append('cnic', cnic);
-    formData.append('email', email);
-    formData.append('dob', birthDate.toString());
-    formData.append('gender', gender);
-    formData.append('securityFees', securityFee);
-    formData.append('marital_status', maritalStatus);
-    formData.append('permanent_address', permanentAddress);
-    formData.append('db_name', db);
-    formData.append('state', state);
-    formData.append('job_title', jobTitle);
-    formData.append('job_location', occupationAddress);
-    formData.append('paymentCycleDate', paymentDate);
-    formData.append('rentForRoom', roomRent);
-    formData.append('roomId', selectedRoom);
-    formData.append('mess_status', messStatus);
-    formData.append('mess_title', messTitle);
-    formData.append('mess_price', messPrice);
+  if (!email) {
+    setModalType('danger');
+    setModalMessage('Please enter email');
+    setModalVisible(true);
+    return;
+  }
 
-    // Add properties as JSON string
-    formData.append('property_info', JSON.stringify(properties));
+  if (!cnic) {
+    setModalType('danger');
+    setModalMessage('Please enter CNIC/B-FORM');
+    setModalVisible(true);
+    return;
+  }
 
-    // Add image
-    formData.append('profile_image', {
-      uri: selectedImage,
-      name: 'profile.jpg',
-      type: 'image/jpeg',
+  if (!phone) {
+    setModalType('danger');
+    setModalMessage('Please enter phone number');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!birthDate) {
+    setModalType('danger');
+    setModalMessage('Please select birth date');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!gender) {
+    setModalType('danger');
+    setModalMessage('Please select gender');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!maritalStatus) {
+    setModalType('danger');
+    setModalMessage('Please select marital status');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!permanentAddress) {
+    setModalType('danger');
+    setModalMessage('Please enter permanent address');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!state) {
+    setModalType('danger');
+    setModalMessage('Please enter state');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!jobTitle) {
+    setModalType('danger');
+    setModalMessage('Please select job title');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!occupationAddress) {
+    setModalType('danger');
+    setModalMessage('Please enter occupation address');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!selectedRoom) {
+    setModalType('danger');
+    setModalMessage('Please select a room');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!paymentDate) {
+    setModalType('danger');
+    setModalMessage('Please select payment date');
+    setModalVisible(true);
+    return;
+  }
+
+  if (!roomRent) {
+    setModalType('danger');
+    setModalMessage('Please enter room rent');
+    setModalVisible(true);
+    return;
+  }
+
+  if (messStatus === 'yes' && (!messTitle || !messPrice)) {
+    setModalType('danger');
+    setModalMessage('Please enter mess title and price');
+    setModalVisible(true);
+    return;
+  }
+
+  // if (guardians.length === 0) {
+  //   setModalType('danger');
+  //   setModalMessage('Please add at least one guardian');
+  //   setModalVisible(true);
+  //   return;
+  // }
+
+  setLoading(true);
+  const db = await AsyncStorage.getItem('db_name');
+
+  const formData = new FormData();
+
+  // Add all the fields to formData
+  formData.append('name', name);
+  formData.append('phone', phone);
+  formData.append('cnic', cnic);
+  formData.append('email', email);
+  formData.append('dob', birthDate.toString());
+  formData.append('gender', gender);
+  formData.append('securityFees', securityFee);
+  formData.append('marital_status', maritalStatus);
+  formData.append('permanent_address', permanentAddress);
+  formData.append('db_name', db);
+  formData.append('state', state);
+  formData.append('job_title', jobTitle);
+  formData.append('job_location', occupationAddress);
+  formData.append('paymentCycleDate', paymentDate);
+  formData.append('rentForRoom', roomRent);
+  formData.append('roomId', selectedRoom);
+  formData.append('mess_status', messStatus);
+  formData.append('mess_title', messTitle);
+  formData.append('mess_price', messPrice);
+
+  // Add properties as JSON string
+  formData.append('property_info', JSON.stringify(properties));
+
+  // Add image
+  formData.append('profile_image', {
+    uri: selectedImage,
+    name: 'profile.jpg',
+    type: 'image/jpeg',
+  });
+
+  // Add guardians as JSON string
+  formData.append('guardians', JSON.stringify(guardians));
+
+  console.log(formData);
+
+  try {
+    const response = await axios.post(`${ApiUrl}/api/tenants/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
 
-    // Add guardians as JSON string
-    formData.append('guardians', JSON.stringify(guardians));
-
-    console.log(formData);
-
-    try {
-      const response = await axios.post(`${ApiUrl}/api/tenants/`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      console.log('API response', response.data);
-      setModalType('success');
-      setModalMessage('Tenant created Successfully');
-      setModalVisible(true);
-      navigation.goBack()
-    } catch (error) {
-      console.log('Error:', error.message);
-      setModalType('danger');
-      setModalMessage('Validation Error');
-      setModalVisible(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    console.log('API response', response.data);
+    setModalType('success');
+    setModalMessage('Tenant created successfully');
+    setModalVisible(true);
+    navigation.goBack();
+  } catch (error) {
+    console.log('Error:', error.message);
+    setModalType('danger');
+    setModalMessage(error.response?.data?.message || 'Validation Error');
+    setModalVisible(true);
+  } finally {
+    setLoading(false);
+  }
+};
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
