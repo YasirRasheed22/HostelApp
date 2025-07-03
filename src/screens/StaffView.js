@@ -151,7 +151,7 @@ export default function StaffView() {
         </View>
       </View>
       <Text style={styles.sectionTitle}>Rights Information</Text>
-      <View style={styles.card}>
+      <View style={[styles.card , {marginBottom:50}]}>
         <View style={{ marginTop: 20 }}>
           <Text style={{ fontWeight: 'bold', marginBottom: 10 }}>Access Rights:</Text>
           <View style={styles.rightsContainer}>
@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#f9f9f9',
+    
   },
   sectionTitle: {
     fontSize: 16,

@@ -145,6 +145,8 @@ export default function TenantView() {
 
   const renderOverview = () => (
     <>
+    <View style={{paddingBottom:30}}>
+
       <Text style={styles.sectionTitle}>Personal Information</Text>
 
       <View style={styles.imageContainer}>
@@ -193,7 +195,7 @@ export default function TenantView() {
         
       )  :null 
       }
-
+ </View>
     </>
   );
 
@@ -220,6 +222,7 @@ export default function TenantView() {
 
   const renderFeeTimeline = () => (
     <>
+    
       <Text style={styles.sectionTitle}>Fees Timeline</Text>
       <View style={styles.card}>
         {user?.tenants?.length > 0 ? (
@@ -283,6 +286,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#f9f9f9',
+    paddingBottom:40,
   },
   headerButtons: {
     flexDirection: 'row',

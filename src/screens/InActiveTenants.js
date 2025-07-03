@@ -88,7 +88,7 @@ export default function InActiveTenants() {
 
     useLayoutEffect(()=>{
        navigation.setOptions({
-      headerTitle: 'InActive Tenants',
+      headerTitle: 'Inactive Tenants',
        headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
        headerRight:()=>{
                return(

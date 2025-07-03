@@ -232,6 +232,7 @@ export default function AddTenant() {
       setModalType('success');
       setModalMessage('Tenant created Successfully');
       setModalVisible(true);
+      navigation.goBack()
     } catch (error) {
       console.log('Error:', error.message);
       setModalType('danger');
@@ -308,6 +309,7 @@ export default function AddTenant() {
           <TextInput
             label="Security Fee"
             value={securityFee}
+            keyboardType='numeric'
             onChangeText={setSecurityFee}
             style={styles.input}
             underlineColor="transparent"
@@ -510,6 +512,7 @@ export default function AddTenant() {
           <TextInput
             label="Room Rent"
             value={roomRent}
+            keyboardType='numeric'
             onChangeText={setRoomRent}
             style={styles.input}
             underlineColor="transparent"
@@ -676,6 +679,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 24,
     backgroundColor: '#F9F9F9',
+    marginBottom:10,
   },
   title: {
     fontSize: 25,

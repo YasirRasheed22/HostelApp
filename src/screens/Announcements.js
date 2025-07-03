@@ -124,7 +124,7 @@ export default function Announcements () {
         {renderRadio('guardian', 'Send to Tenant Guardian')}
       </View>
 
-      {(selectedOption === 'specific' || selectedOption === 'guardian') && (
+      {(selectedOption === 'send_to_specific' || selectedOption === 'guardian') && (
         <View style={styles.dropdown}>
           <Text style={styles.label}>Select Tenant(s)</Text>
           {filteredTenants.map(renderTenantCheckbox)}
