@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,11 @@ import {
   Image,
   PermissionsAndroid,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
-import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import {
   Button,
   Modal,
@@ -20,11 +21,12 @@ import {
   Portal,
   TextInput,
 } from 'react-native-paper';
-import {font} from '../components/ThemeStyle';
-import {useNavigation} from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {ApiUrl} from '../../config/services';
+import { ApiUrl } from '../../config/services';
 import axios from 'axios';
+import AlertModal from '../components/CustomAlert';
 
 export default function AddTenant() {
   const [rooms, setRooms] = useState([]);
@@ -32,7 +34,7 @@ export default function AddTenant() {
   useEffect(() => {
     const getRooms = async () => {
       const db = await AsyncStorage.getItem('db_name');
-      const payload = {db_name: db};
+      const payload = { db_name: db };
 
       try {
         console.log('running api');
@@ -55,14 +57,19 @@ export default function AddTenant() {
   const [birthDate, setBirthDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible1, setModalVisible1] = useState(false);
   const [fullName, setFullName] = useState('');
   const [cnic1, setCnic1] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger');
   const [relation, setRelation] = useState('');
   const [phone1, setPhone1] = useState('');
   const [roomRent, setRoomRent] = useState('');
   const [messTitle, setMessTitle] = useState('');
   const [messPrice, setMessPrice] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const [messStatus, setMessStatus] = useState('no');
 
   const [gender, setGender] = useState(null);
@@ -92,22 +99,25 @@ export default function AddTenant() {
     setProperties([...properties, '']);
   };
 
-  navigation.setOptions({
-    headerTitle: 'Add Tenants',
-    headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
-    //    headerRight:()=>{
-    //            return(
-    //              <View style={{ flexDirection: 'row' }}>
-    //             <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
-    //                 <AntDesign name="retweet" size={22} color="#fff" />
-    //               </TouchableOpacity>
-    //             <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
-    //               <AntDesign name="adduser" size={22} color="#fff" />
-    //             </TouchableOpacity>
-    //             </View>
-    //            );
-    //    }
-  });
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Add Tenants',
+      headerTitleStyle: { fontSize: 15, fontFamily: font.secondary },
+      //    headerRight:()=>{
+      //            return(
+      //              <View style={{ flexDirection: 'row' }}>
+      //             <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+      //                 <AntDesign name="retweet" size={22} color="#fff" />
+      //               </TouchableOpacity>
+      //             <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+      //               <AntDesign name="adduser" size={22} color="#fff" />
+      //             </TouchableOpacity>
+      //             </View>
+      //            );
+      //    }
+    });
+  }, [navigation])
+
 
   const handlePropertyChange = (text, index) => {
     const updated = [...properties];
@@ -139,14 +149,14 @@ export default function AddTenant() {
 
   const handleImagePick = () => {
     Alert.alert('Choose Option', 'Camera or Gallery', [
-      {text: 'Take Photo', onPress: handleCameraLaunch},
-      {text: 'Choose Gallery', onPress: openImagePicker},
-      {text: 'Cancel', style: 'cancel'},
+      { text: 'Take Photo', onPress: handleCameraLaunch },
+      { text: 'Choose Gallery', onPress: openImagePicker },
+      { text: 'Cancel', style: 'cancel' },
     ]);
   };
 
   const openImagePicker = () => {
-    launchImageLibrary({mediaType: 'photo'}, response => {
+    launchImageLibrary({ mediaType: 'photo' }, response => {
       const uri = response.assets?.[0]?.uri;
       if (uri) setSelectedImage(uri);
     });
@@ -157,54 +167,59 @@ export default function AddTenant() {
       Alert.alert('Permission Denied', 'Camera access is required');
       return;
     }
-    launchCamera({mediaType: 'photo'}, response => {
+    launchCamera({ mediaType: 'photo' }, response => {
       const uri = response.assets?.[0]?.uri;
       if (uri) setSelectedImage(uri);
     });
   };
 
   const handleSubmit = async () => {
-
-    if(!selectedImage)
-    {
-      Alert.alert('Please add image');
+    if (!selectedImage) {
+      setModalType('danger');
+      setModalMessage('Upload Image');
+      setModalVisible(true);
       return;
     }
+    setLoading(true);
     const db = await AsyncStorage.getItem('db_name');
 
     const formData = new FormData();
 
+    // Add all the fields to formData
     formData.append('name', name);
     formData.append('phone', phone);
     formData.append('cnic', cnic);
     formData.append('email', email);
     formData.append('dob', birthDate.toString());
-    formData.append('gender', gender.toString());
+    formData.append('gender', gender);
     formData.append('securityFees', securityFee);
-    formData.append('marital_status', maritalStatus.toString());
+    formData.append('marital_status', maritalStatus);
     formData.append('permanent_address', permanentAddress);
     formData.append('db_name', db);
     formData.append('state', state);
-    formData.append('job_title', jobTitle.toString());
+    formData.append('job_title', jobTitle);
     formData.append('job_location', occupationAddress);
     formData.append('paymentCycleDate', paymentDate);
     formData.append('rentForRoom', roomRent);
-    formData.append('roomId', selectedRoom.toString());
+    formData.append('roomId', selectedRoom);
     formData.append('mess_status', messStatus);
     formData.append('mess_title', messTitle);
     formData.append('mess_price', messPrice);
-    console.log(selectedImage);
+
+    // Add properties as JSON string
+    formData.append('property_info', JSON.stringify(properties));
+
+    // Add image
     formData.append('profile_image', {
-      uri: selectedImage, // from ImagePicker
+      uri: selectedImage,
       name: 'profile.jpg',
       type: 'image/jpeg',
     });
-   
-   formData.append('guardians', JSON.stringify(guardians));
 
+    // Add guardians as JSON string
+    formData.append('guardians', JSON.stringify(guardians));
 
     console.log(formData);
-    
 
     try {
       const response = await axios.post(`${ApiUrl}/api/tenants/`, formData, {
@@ -214,22 +229,42 @@ export default function AddTenant() {
       });
 
       console.log('API response', response.data);
-      Alert.alert('Tenant added Succesfully');
+      setModalType('success');
+      setModalMessage('Tenant created Successfully');
+      setModalVisible(true);
     } catch (error) {
       console.log('Error:', error.message);
+      setModalType('danger');
+      setModalMessage('Validation Error');
+      setModalVisible(true);
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <PaperProvider>
       <ScrollView contentContainerStyle={styles.container}>
-       
+        <AlertModal
+          visible={modalVisible}
+          onDismiss={() => setModalVisible(false)}
+          message={modalMessage}
+          type={modalType}
+        />
+
         <Text style={styles.sectionTitle}>Personal Information</Text>
 
         <View style={styles.imageContainer}>
           <TouchableOpacity onPress={handleImagePick}>
             {selectedImage ? (
-              <Image source={{uri: selectedImage}} style={styles.roundImage} />
+              <Image source={{ uri: selectedImage }} style={styles.roundImage} />
             ) : (
               <View style={styles.iconCircle}>
                 <EvilIcons name="image" size={50} color="#888" />
@@ -238,7 +273,7 @@ export default function AddTenant() {
           </TouchableOpacity>
         </View>
 
-        <View style={{gap: 12}}>
+        <View style={{ gap: 12 }}>
           <TextInput
             label="Full Name"
             value={name}
@@ -250,12 +285,14 @@ export default function AddTenant() {
             label="CNIC/B-FORM"
             value={cnic}
             onChangeText={setCnic}
+            keyboardType="numeric"
             style={styles.input}
             underlineColor="transparent"
           />
           <TextInput
             label="Phone No"
             value={phone}
+            keyboardType="numeric"
             onChangeText={setPhone}
             style={styles.input}
             underlineColor="transparent"
@@ -263,7 +300,8 @@ export default function AddTenant() {
           <TextInput
             label="E-Mail"
             value={email}
-            onChangeText={setEmail}
+
+            onChangeText={text => setEmail(text.toLowerCase())}
             style={styles.input}
             underlineColor="transparent"
           />
@@ -281,10 +319,10 @@ export default function AddTenant() {
             <Text style={styles.fieldText}>
               {birthDate
                 ? `${birthDate.getDate().toString().padStart(2, '0')}-${(
-                    birthDate.getMonth() + 1
-                  )
-                    .toString()
-                    .padStart(2, '0')}-${birthDate.getFullYear()}`
+                  birthDate.getMonth() + 1
+                )
+                  .toString()
+                  .padStart(2, '0')}-${birthDate.getFullYear()}`
                 : 'Choose Date'}
             </Text>
           </TouchableOpacity>
@@ -447,18 +485,25 @@ export default function AddTenant() {
               visible={paymentDateModalVisible}
               onDismiss={() => setPaymentDateModalVisible(false)}
               contentContainerStyle={styles.modalContainer}>
+
               <Text style={styles.modalTitle}>Select Payment Date</Text>
-              {['01', '02', '03'].map(item => (
-                <TouchableOpacity
-                  key={item}
-                  onPress={() => {
-                    setPaymentDate(item);
-                    setPaymentDateModalVisible(false);
-                  }}
-                  style={styles.modalItem}>
-                  <Text style={styles.modalItemText}>{item}</Text>
-                </TouchableOpacity>
-              ))}
+
+              <ScrollView style={{ maxHeight: 200 }}>
+                {Array.from({ length: 30 }, (_, i) =>
+                  (i + 1).toString().padStart(2, '0'),
+                ).map(item => (
+                  <TouchableOpacity
+                    key={item}
+                    onPress={() => {
+                      setPaymentDate(item);
+                      setPaymentDateModalVisible(false);
+                    }}
+                    style={styles.modalItem}>
+                    <Text style={styles.modalItemText}>{item}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
             </Modal>
           </Portal>
 
@@ -474,14 +519,14 @@ export default function AddTenant() {
           <Button
             style={styles.button}
             mode="contained"
-            onPress={() => setModalVisible(true)}>
+            onPress={() => setModalVisible1(true)}>
             Add Guardian
           </Button>
 
           <Portal>
             <Modal
-              visible={modalVisible}
-              onDismiss={() => setModalVisible(false)}
+              visible={modalVisible1}
+              onDismiss={() => setModalVisible1(false)}
               contentContainerStyle={styles.modalContainer}>
               <Text style={styles.modalTitle}>Add Guardian</Text>
 
@@ -520,27 +565,27 @@ export default function AddTenant() {
               />
 
               <View style={styles.buttonRow}>
-                <Button onPress={() => setModalVisible(false)}>Cancel</Button>
+                <Button onPress={() => setModalVisible1(false)}>Cancel</Button>
                 <Button
                   mode="contained"
                   style={styles.button}
-                 onPress={() => {
-                  const newGuardian = {
-                    name: fullName,
-                    phone: phone1,
-                    relation,
-                    // address: '', // you can add a separate field if needed
-                    cnic: cnic1,
-                  };
+                  onPress={() => {
+                    const newGuardian = {
+                      name: fullName,
+                      phone: phone1,
+                      relation,
+                      // address: '', // you can add a separate field if needed
+                      cnic: cnic1,
+                    };
 
-                  setGuardians(prev => [...prev, newGuardian]);
-                  // Clear fields after saving
-                  setFullName('');
-                  setPhone1('');
-                  setRelation('');
-                  setCnic1('');
-                  setModalVisible(false);
-                }}>
+                    setGuardians(prev => [...prev, newGuardian]);
+                    // Clear fields after saving
+                    setFullName('');
+                    setPhone1('');
+                    setRelation('');
+                    setCnic1('');
+                    setModalVisible1(false);
+                  }}>
                   Save
                 </Button>
               </View>
@@ -548,22 +593,31 @@ export default function AddTenant() {
           </Portal>
 
           <Text style={styles.sectionTitle}>Mess Information</Text>
-          <View style={{flexDirection: 'row', gap: 10}}>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity
-              style={styles.button1}
-              onPress={() => {
-                setMessStatus('yes');
-              }}>
-              <Text style={{color: 'white'}}>YES</Text>
+              style={[
+                styles.button1,
+                messStatus === 'yes'
+                  ? { backgroundColor: '#75AB38' }
+                  : { backgroundColor: '#fff', borderWidth: 1, borderColor: '#75AB38' },
+              ]}
+              onPress={() => setMessStatus('yes')}>
+              <Text style={{ color: messStatus === 'yes' ? '#fff' : '#75AB38' }}>YES</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={styles.button2}
-              onPress={() => {
-                setMessStatus('no');
-              }}>
-              <Text style={{color: 'black'}}>NO</Text>
+              style={[
+                styles.button2,
+                messStatus === 'no'
+                  ? { backgroundColor: '#75AB38' }
+                  : { backgroundColor: '#fff', borderWidth: 1, borderColor: '#75AB38' },
+              ]}
+              onPress={() => setMessStatus('no')}>
+              <Text style={{ color: messStatus === 'no' ? '#fff' : '#75AB38' }}>NO</Text>
             </TouchableOpacity>
           </View>
+
+
           {messStatus === 'yes' ? (
             <>
               <TextInput
@@ -582,10 +636,10 @@ export default function AddTenant() {
               />
             </>
           ) : // Optional: render something else when messStatus is false
-          null}
+            null}
 
           <Text style={styles.sectionTitle}>Property Information</Text>
-          <View style={{alignItems: 'flex-end', marginBottom: 17}}>
+          <View style={{ alignItems: 'flex-end', marginBottom: 17 }}>
             <TouchableOpacity
               style={styles.button3}
               onPress={handleAddProperty}>
@@ -599,7 +653,7 @@ export default function AddTenant() {
                 label={`Property ${index + 1}`}
                 value={property}
                 onChangeText={text => handlePropertyChange(text, index)}
-                style={[styles.input, {flex: 1}]}
+                style={[styles.input, { flex: 1 }]}
                 underlineColor="transparent"
               />
               <TouchableOpacity
@@ -779,6 +833,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     height: 60, // Uniform height
     justifyContent: 'center',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   fieldText: {
     color: '#333',

@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import React, { useEffect, useState } from 'react';
@@ -58,6 +59,8 @@ export default function Reports() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const [reportList, setReportList] = useState([]);
+    const [loading , setLoading] = useState(true)
+
   const [assetReport, setAssetReport] = useState([]);
   const [profitReport, setProfitReport] = useState([]);
   const [inactiveTenant, setInactiveTenant] = useState([]);
@@ -82,6 +85,8 @@ export default function Reports() {
         setActiveTenant(reports.filter(r => r.reportType === 'Active Tenants Report'));
       } catch (error) {
         console.log('Fetch Error:', error.message);
+      }finally{
+        setLoading(false)
       }
     };
 
@@ -151,6 +156,7 @@ export default function Reports() {
           style: 'destructive',
           onPress: async () => {
             try {
+              setLoading(true)
               const db = await AsyncStorage.getItem('db_name');
               await axios.delete(`${ApiUrl}/api/report/${id}`, {
                 data: {db_name: db},
@@ -160,6 +166,8 @@ export default function Reports() {
             } catch (error) {
               console.error('Error deleting Report:', error.message);
               Alert.alert('Error', 'Failed to delete the Report.');
+            }finally{
+              setLoading(false)
             }
           },
         },
@@ -179,6 +187,14 @@ export default function Reports() {
     { label: 'Inactive Tenants Reports', count: inactiveTenant?.length, icon: 'file-text-o', comp: 'InActiveTenantReport' },
     { label: 'Profit and Loss Report', count: profitReport?.length, icon: 'file-text-o', comp: 'ProfitAndLossReport' },
   ];
+  
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -231,6 +247,13 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 24,
+    paddingBottom: 40,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   titleRow: {
     flexDirection: 'row',
@@ -240,41 +263,59 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     fontFamily: font.secondary,
+    color: '#333',
   },
   separator: {
     height: 1,
-    backgroundColor: '#ccc',
+    backgroundColor: '#ddd',
     marginVertical: 20,
   },
   sectionTitle: {
     fontSize: 20,
     fontFamily: font.secondary,
     color: '#4E4E5F',
-    marginBottom: 10,
+    marginBottom: 12,
   },
+
+  // Summary Cards
   cardList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
   card: {
     width: '48%',
     flexDirection: 'row',
     backgroundColor: '#fff',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
   },
   iconWrapper: {
-    width: '30%',
+    width: 35,
+    height: 35,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#75AB38',
+    marginRight: 12,
+  },
+  icons: {
+    justifyContent: 'center',
     alignItems: 'center',
   },
   textWrapper: {
-    width: '70%',
+    flex: 1,
   },
   cardTitle: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#7CB33D',
     fontFamily: font.secondary,
   },
@@ -284,53 +325,58 @@ const styles = StyleSheet.create({
     color: '#7CB33D',
     marginTop: 4,
   },
-  icons: {
-    width: 25,
-    height: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#75AB38',
-    borderRadius: 10,
+
+  // Report List Card
+  container2: {
+    marginTop: 20,
   },
   card2: {
     backgroundColor: '#fff',
     padding: 16,
+    marginHorizontal: 4,
     marginBottom: 12,
-    borderRadius: 10,
-    elevation: 3,
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   infoBox: {
-    width: '80%',
+    flex: 1,
+    paddingRight: 8,
   },
   name: {
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: font.secondary,
+    color: '#333',
     marginBottom: 6,
   },
+
+  // Buttons
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 10,
+    alignItems: 'center',
+    marginLeft: 8,
   },
-   viewBtn: {
+  viewBtn: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 15,
-    paddingHorizontal: 19,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 6,
-    marginRight: 10,
+    marginRight: 8,
   },
   deleteBtn: {
     backgroundColor: '#f44336',
-    paddingVertical: 15,
-    paddingHorizontal: 19,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 6,
-    marginRight: 10,
   },
   btnText: {
     color: 'white',
     fontFamily: font.secondary,
-  },
-  container2: {
-    marginTop: 20,
+    fontSize: 14,
   },
 });

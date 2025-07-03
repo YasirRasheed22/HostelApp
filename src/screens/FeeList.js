@@ -9,6 +9,7 @@ import {
     FlatList,
     Image,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -18,7 +19,6 @@ import { font } from '../components/ThemeStyle';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
-
 
 const UserCard = ({ user, onEdit, onView, onDelete }) => (
     <View style={styles.card1}>
@@ -55,16 +55,16 @@ const UserCard = ({ user, onEdit, onView, onDelete }) => (
 
 export default function FeeList() {
     const today = new Date();
-    const currentMonth = String(today.getMonth() + 1).padStart(2, '0'); // "01" to "12"
+    const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
     const currentYear = String(today.getFullYear());
     const navigation = useNavigation();
     const [counter, setCounter] = useState();
-    const [showStartDropdown, setShowStartDropdown] = useState();
-    const [startDate, setStartDate] = useState(currentMonth)
-    const [showEndDropdown, setShowEndDropdown] = useState();
-    const [endDate, setEndDate] = useState(currentYear)
-    const [users, setUser] = useState();
-
+    const [showStartDropdown, setShowStartDropdown] = useState(false);
+    const [startDate, setStartDate] = useState(currentMonth);
+    const [showEndDropdown, setShowEndDropdown] = useState(false);
+    const [endDate, setEndDate] = useState(currentYear);
+    const [users, setUser] = useState([]);
+    const [loading, setLoading] = useState(true);
 
 
     const fetchFee = async () => {
@@ -73,20 +73,21 @@ export default function FeeList() {
             const payload = {
                 db_name: db,
             }
-            console.log(`${ApiUrl}/api/fees/${startDate}/${endDate}`)
-            const response = await axios.put(`${ApiUrl}/api/fees/${startDate}/${endDate}`, payload)
-            console.log(response)
-            setUser(response.data?.data)
-            setCounter(response.data)
+            const response = await axios.put(`${ApiUrl}/api/fees/${startDate}/${endDate}`, payload);
+            setUser(response.data?.data || []);
+            setCounter(response.data);
         } catch (error) {
-            console.log(error.message)
+            console.log(error.message);
+            Alert.alert('Error', 'Failed to fetch fees data');
+        }finally{
+            setLoading(false)
         }
     }
+
     const isFocussed = useIsFocused();
     useEffect(() => {
         fetchFee();
-    }, [isFocussed])
-
+    }, [isFocussed, startDate, endDate]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -101,155 +102,179 @@ export default function FeeList() {
     }, [navigation]);
 
     const reports = [
-        { label: 'Active Fees', count: counter?.activePayment, icon: 'file-text-o',  },
-        { label: 'Received Fees (Verified)', count: counter?.receivedPaymentverified === null ? 0 : counter?.receivedPaymentverified, icon: 'file-text-o',  },
-        { label: 'Received Fees (Unverified)', count: counter?.receivedPaymentUnverified === null ? 0 : counter?.receivedPaymentUnverified, icon: 'file-text-o', },
-        { label: 'Remaining Fees', count: 0, icon: 'file-text-o',  },
+        { label: 'Active Fees', count: counter?.activePayment || 0, icon: 'file-text-o' },
+        { label: 'Received Fees (Verified)', count: counter?.receivedPaymentverified || 0, icon: 'file-text-o' },
+        { label: 'Received Fees (Unverified)', count: counter?.receivedPaymentUnverified || 0, icon: 'file-text-o' },
+        { label: 'Remaining Fees', count: 0, icon: 'file-text-o' },
     ];
-
 
     const handlePress = () => {
         navigation.navigate('GenerateFee');
     };
 
     const handleEdit = (user) => {
-        console.log(user);
-        navigation.navigate('EditFee', {id : user.id})
+        navigation.navigate('EditFee', {id: user.id});
     }
+
     const handleDelete = async(id) => {
-    Alert.alert(
-      'Confirm Deletion',
-      'Are you sure you want to delete this item?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const db = await AsyncStorage.getItem('db_name');
-              await axios.delete(`${ApiUrl}/api/fees/single/${id}`, {
-                data: {db_name: db},
-              });
-              console.log('Fees deleted successfully');
-              fetchFee();
-              // Optional: refresh list or show success toast
-            } catch (error) {
-              console.error( error.message);
-              Alert.alert('Error', 'Failed to delete Fees.');
-            }
-          },
-        },
-      ],
-      {cancelable: true},
+        Alert.alert(
+            'Confirm Deletion',
+            'Are you sure you want to delete this item?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const db = await AsyncStorage.getItem('db_name');
+                            await axios.delete(`${ApiUrl}/api/fees/single/${id}`, {
+                                data: {db_name: db},
+                            });
+                            fetchFee();
+                        } catch (error) {
+                            console.error(error.message);
+                            Alert.alert('Error', 'Failed to delete Fees.');
+                        }
+                    },
+                },
+            ],
+            {cancelable: true},
+        );
+    };
+      if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
     );
-  };
+  }
+
     const handleView = (user) => {
-        console.log(user)
-        navigation.navigate('FeeView' , {id: user.id});
+        navigation.navigate('FeeView', {id: user.id});
+    }
+
+    const handleFilter = () => {
+        fetchFee();
     }
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <ScrollView contentContainerStyle={styles.container}>
-                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Pressable onPress={() => setShowStartDropdown(!showStartDropdown) && setShowEndDropdown(false)} style={styles.input}>
-                        <Text style={styles.dropdownText}>{startDate || 'Select Month'}</Text>
-                    </Pressable>
-                    {showStartDropdown && (
-                        <View style={styles.dropdown}>
-                            <ScrollView>
-                                {[
-                                    { name: 'Jan', value: '01' },
-                                    { name: 'Feb', value: '02' },
-                                    { name: 'Mar', value: '03' },
-                                    { name: 'Apr', value: '04' },
-                                    { name: 'May', value: '05' },
-                                    { name: 'Jun', value: '06' },
-                                    { name: 'Jul', value: '07' },
-                                    { name: 'Aug', value: '08' },
-                                    { name: 'Sep', value: '09' },
-                                    { name: 'Oct', value: '10' },
-                                    { name: 'Nov', value: '11' },
-                                    { name: 'Dec', value: '12' }
-                                ].map((item, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={styles.dropdownItem}
-                                        onPress={() => {
-                                            setStartDate(item.value); // Set the value like '01'
-                                            setShowStartDropdown(false);
-                                        }}
-                                    >
-                                        <Text>{item.name}</Text> {/* Show 'Jan', 'Feb', etc. */}
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-
-                        </View>
-                    )}
-                    <Pressable onPress={() => setShowEndDropdown(!showEndDropdown) && setShowStartDropdown(false)} style={styles.input}>
-                        <Text style={styles.dropdownText}>{endDate || 'Select Year'}</Text>
-                    </Pressable>
-                    {showEndDropdown && (
-                        <View style={styles.dropdown}>
-                            <ScrollView>
-                                {['2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'].map((item, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={styles.dropdownItem}
-                                        onPress={() => {
-                                            setEndDate(item);
-                                            setShowEndDropdown(false);
-                                        }}
-                                    >
-                                        <Text>{item}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-                    )}
-
-                </View>
-                <TouchableOpacity style={styles.button}>
-                    <Text style={{ color: '#fff' }}>Filter</Text>
-                </TouchableOpacity>
-                <View style={styles.cardList}>
-                    {reports.map((item, index) => (
-                        <TouchableOpacity  key={index} style={styles.card}>
-                            <View style={styles.iconWrapper}>
-                                <View style={styles.icons}>
-                                    <FontAwesome name={item.icon} size={15} color="#fff" />
+            <FlatList
+                ListHeaderComponent={
+                    <View style={styles.container}>
+                        {/* Date Selectors */}
+                        <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <Pressable 
+                                onPress={() => {
+                                    setShowStartDropdown(!showStartDropdown);
+                                    setShowEndDropdown(false);
+                                }} 
+                                style={styles.input}
+                            >
+                                <Text style={styles.dropdownText}>{startDate || 'Select Month'}</Text>
+                            </Pressable>
+                            
+                            {showStartDropdown && (
+                                <View style={[styles.dropdown, {left: 0, right: '52%'}]}>
+                                    <ScrollView>
+                                        {[
+                                            { name: 'Jan', value: '01' },
+                                            { name: 'Feb', value: '02' },
+                                            { name: 'Mar', value: '03' },
+                                            { name: 'Apr', value: '04' },
+                                            { name: 'May', value: '05' },
+                                            { name: 'Jun', value: '06' },
+                                            { name: 'Jul', value: '07' },
+                                            { name: 'Aug', value: '08' },
+                                            { name: 'Sep', value: '09' },
+                                            { name: 'Oct', value: '10' },
+                                            { name: 'Nov', value: '11' },
+                                            { name: 'Dec', value: '12' }
+                                        ].map((item, index) => (
+                                            <TouchableOpacity
+                                                key={index}
+                                                style={styles.dropdownItem}
+                                                onPress={() => {
+                                                    setStartDate(item.value);
+                                                    setShowStartDropdown(false);
+                                                }}
+                                            >
+                                                <Text>{item.name}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
                                 </View>
-                            </View>
-                            <View style={styles.textWrapper}>
-                                <Text style={styles.cardTitle}>{item.label}</Text>
-                                <Text style={styles.cardCount}>{item.count}</Text>
-                            </View>
+                            )}
+                            
+                            <Pressable 
+                                onPress={() => {
+                                    setShowEndDropdown(!showEndDropdown);
+                                    setShowStartDropdown(false);
+                                }} 
+                                style={styles.input}
+                            >
+                                <Text style={styles.dropdownText}>{endDate || 'Select Year'}</Text>
+                            </Pressable>
+                            
+                            {showEndDropdown && (
+                                <View style={[styles.dropdown, {left: '52%', right: 0}]}>
+                                    <ScrollView>
+                                        {Array.from({length: 21}, (_, i) => 2015 + i).map((year) => (
+                                            <TouchableOpacity
+                                                key={year}
+                                                style={styles.dropdownItem}
+                                                onPress={() => {
+                                                    setEndDate(String(year));
+                                                    setShowEndDropdown(false);
+                                                }}
+                                            >
+                                                <Text>{year}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                </View>
+                            )}
+                        </View>
+                        
+                        <TouchableOpacity onPress={handleFilter} style={styles.button}>
+                            <Text style={{ color: '#fff' }}>Filter</Text>
                         </TouchableOpacity>
-                    ))}
-                </View>
-                <View style={styles.container2}>
-                    <View>
-                         <FlatList
-                        data={users}
-                        keyExtractor={item => item.id}
-                        renderItem={({ item }) => (
-                            <UserCard
-                                user={item}
-                                onView={handleView}
-                                onDelete={handleDelete}
-                                onEdit={handleEdit}
-                            />
-                        )}
-                    />
+                        
+                        {/* Stats Cards */}
+                        <View style={styles.cardList}>
+                            {reports.map((item, index) => (
+                                <TouchableOpacity key={index} style={styles.card}>
+                                    <View style={styles.iconWrapper}>
+                                        <View style={styles.icons}>
+                                            <FontAwesome name={item.icon} size={15} color="#fff" />
+                                        </View>
+                                    </View>
+                                    <View style={styles.textWrapper}>
+                                        <Text style={styles.cardTitle}>{item.label}</Text>
+                                        <Text style={styles.cardCount}>{item.count}</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
                     </View>
-                   
-                </View>
-            </ScrollView>
+                }
+                data={users}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({ item }) => (
+                    <UserCard
+                        user={item}
+                        onView={handleView}
+                        onDelete={handleDelete}
+                        onEdit={handleEdit}
+                    />
+                )}
+                contentContainerStyle={styles.listContentContainer}
+                ListFooterComponent={<View style={{ height: 20 }} />}
+            />
         </SafeAreaView>
     );
 }
@@ -259,8 +284,17 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F9F9F9',
     },
+       loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
     container: {
         padding: 24,
+    },
+    listContentContainer: {
+        paddingBottom: 20,
     },
     cardList: {
         marginTop: 20,
@@ -304,9 +338,6 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         backgroundColor: '#75AB38',
     },
-    container2: {
-        marginTop: 20,
-    },
     input: {
         padding: 12,
         width: '48%',
@@ -319,8 +350,6 @@ const styles = StyleSheet.create({
     dropdown: {
         position: 'absolute',
         top: 50,
-        left: 0,
-        right: 0,
         backgroundColor: '#fff',
         borderColor: '#ccc',
         borderWidth: 1,
@@ -342,74 +371,68 @@ const styles = StyleSheet.create({
     button: {
         backgroundColor: '#75AB38',
         padding: 10,
-        marginTop:15,
-        // width:'30%',
+        marginTop: 15,
         alignItems: 'center',
         borderRadius: 10,
     },
-     card1: {
-    backgroundColor: '#fff',
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 10,
-    elevation: 3,
-  },
-   row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  sideBox: {
-    width: '25%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoBox: {
-    width: '100%',
-  },
-  name: {
-    fontSize: 18,
-    // fontWeight: 'bold',
-    fontFamily: font.secondary,
-    marginBottom: 6,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'flex-end',
-  },
-  viewBtn: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  deleteBtn: {
-    backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginLeft: 10,
-  },
-  EditBtn: {
-    backgroundColor: 'gray',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  btnText: {
-    color: 'white',
-    // fontWeight: 'bold',
-    fontFamily: font.secondary,
-  },
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F9F9F9',
-  },
+    card1: {
+        backgroundColor: '#fff',
+        padding: 16,
+        marginBottom: 12,
+        borderRadius: 10,
+        elevation: 3,
+        marginHorizontal: 24,
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+    },
+    sideBox: {
+        width: '25%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    infoBox: {
+        width: '75%',
+    },
+    name: {
+        fontSize: 18,
+        fontFamily: font.secondary,
+        marginBottom: 6,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        marginTop: 10,
+        justifyContent: 'flex-end',
+    },
+    viewBtn: {
+        backgroundColor: '#4CAF50',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+        marginRight: 10,
+    },
+    deleteBtn: {
+        backgroundColor: '#f44336',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+        marginLeft: 10,
+    },
+    EditBtn: {
+        backgroundColor: 'gray',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+    },
+    btnText: {
+        color: 'white',
+        fontFamily: font.secondary,
+    },
     avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#ccc',
-  },
-}); 
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#ccc',
+    },
+});

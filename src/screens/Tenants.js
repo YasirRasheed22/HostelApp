@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  ActivityIndicator,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import AntDesign1 from 'react-native-vector-icons/FontAwesome';
@@ -22,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {DataTable} from 'react-native-paper';
 
 const UserCard = ({user, toggleStatus, onEdit, onView, onDelete}) => (
+  <TouchableWithoutFeedback onPress={() => onView(user)}>
   <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
@@ -33,7 +36,7 @@ const UserCard = ({user, toggleStatus, onEdit, onView, onDelete}) => (
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user.name}</Text>
         {/* <Text>Gender: {user.gender}</Text> */}
-        <Text>Phone: {user.phone}</Text>
+        {/* <Text>Phone: {user.phone}</Text> */}
         <Text>Room No: {user.room}</Text>
         {/* <Text>Rent: {user.rent}</Text> */}
 
@@ -53,7 +56,7 @@ const UserCard = ({user, toggleStatus, onEdit, onView, onDelete}) => (
         </TouchableOpacity>
       </View>
     </View>
-    <View style={styles.buttonContainer}>
+    {/* <View style={styles.buttonContainer}>
       <TouchableOpacity onPress={() => onView(user)} style={styles.viewBtn}>
         <Text style={styles.btnText}>View</Text>
       </TouchableOpacity>
@@ -65,12 +68,16 @@ const UserCard = ({user, toggleStatus, onEdit, onView, onDelete}) => (
         style={styles.deleteBtn}>
         <Text style={styles.btnText}>Delete</Text>
       </TouchableOpacity>
-    </View>
+    </View> */}
   </View>
+  </TouchableWithoutFeedback>
 );
 
 export default function Tenants() {
+  const [loading , setLoading] = useState(true)
   const navigation = useNavigation();
+ 
+
 
   const ToggleView = () => {
     setTableView(prev => {
@@ -108,12 +115,13 @@ export default function Tenants() {
   const isFocused = useIsFocused();
   useEffect(() => {
     fetchTenants();
-  }, [db_name, isFocused]);
+  }, [isFocused]);
 
   const fetchTenants = async () => {
     try {
+      // setLoading(true)
       const db_name = await AsyncStorage.getItem('db_name');
-      setdb(db_name);
+      // setdb(db_name);
 
       const payload = {
         db_name: db_name,
@@ -137,8 +145,12 @@ export default function Tenants() {
       setUsers(transformedUsers.reverse());
     } catch (error) {
       console.error('Error fetching tenants:', error);
+    }finally{
+      setLoading(false)
     }
   };
+
+  
 
   const [isTableView, setTableView] = useState(false);
   const [page, setPage] = useState(0);
@@ -227,7 +239,13 @@ export default function Tenants() {
      }
     setUsers(updatedUsers);
   };
-
+ if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -285,96 +303,58 @@ export default function Tenants() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 25,
-    marginBottom: 10,
-    // fontWeight: 'bold',
-    fontFamily: font.secondary,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#ccc',
-    marginTop: 10,
-    marginBottom: 20,
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
   },
   container: {
-    padding: 24,
-    // backgroundColor: '#f2f2f2',
+    paddingTop: 10,
+    paddingBottom: 20,
     flex: 1,
   },
   card: {
     backgroundColor: '#fff',
+    marginVertical: 10,
+    marginHorizontal: 16,
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
-    borderRadius: 10,
-    elevation: 3,
+    elevation: 5, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   sideBox: {
-    width: '30%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 60,
+    height: 60,
+    marginRight: 16,
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ccc',
+    resizeMode: 'cover',
   },
   infoBox: {
-    width: '70%',
+    flex: 1,
   },
   name: {
     fontSize: 18,
-    // fontWeight: 'bold',
     fontFamily: font.secondary,
-    marginBottom: 6,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'flex-end',
-  },
-  viewBtn: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  deleteBtn: {
-    backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginLeft: 10,
-  },
-  EditBtn: {
-    backgroundColor: 'gray',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  btnText: {
-    color: 'white',
-    // fontWeight: 'bold',
-    fontFamily: font.secondary,
-  },
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F9F9F9',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 4,
   },
   status: {
-    marginTop: 6,
-    // fontWeight: 'bold',
-    fontFamily: font.secondary,
+    marginTop: 8,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
     alignSelf: 'flex-start',
+    fontFamily: font.secondary,
   },
   active: {
     backgroundColor: '#d4edda',
@@ -392,10 +372,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#ccc',
+  title: {
+    fontSize: 25,
+    fontFamily: font.secondary,
+    marginBottom: 10,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
 });
+

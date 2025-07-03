@@ -8,6 +8,7 @@ import {
   Image,
   FlatList,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -21,7 +22,7 @@ import { ApiUrl } from '../../config/services';
 
 
 const UserCard = ({ user, toggleStatus, onEdit, onDelete }) => (
-  <View style={styles.userCard}>
+  <View style={styles.card}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
         <Image source={{ uri: user?.user?.profile_image || user?.tenant?.profile_image }} style={styles.avatar} />
@@ -58,6 +59,8 @@ export default function LeaveList() {
   const navigation = useNavigation();
   const [counter, setCount] = useState();
   const [users, setUsers] = useState();
+    const [loading , setLoading] = useState(true)
+
   const route = useRoute();
   const { data } = route.params;
   console.log(data);
@@ -93,6 +96,8 @@ export default function LeaveList() {
         setUsers(response.data?.leaves);
       } catch (error) {
         console.log(error.message)
+      }finally{
+        setLoading(false)
       }
     }
 
@@ -149,6 +154,7 @@ export default function LeaveList() {
 
 
 
+
   const handleEdit = (user) => {
 console.log("on edit click" ,user)
 navigation.navigate('EditLeave' , {id: user?.id})
@@ -187,6 +193,13 @@ navigation.navigate('EditLeave' , {id: user?.id})
   };
 
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -216,88 +229,53 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
   },
   container: {
-    padding: 24,
-  },
-  cardList: {
-    marginTop: 10,
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+    paddingTop: 10,
+    paddingBottom: 20,
+    flex: 1,
   },
   card: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    width: '48%',
-    padding: 16,
-    marginBottom: 12,
-    alignItems: 'center',
-  },
-  iconWrapper: {
-    width: '30%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textWrapper: {
-    width: '70%',
-  },
-  cardTitle: {
-    color: '#7CB33D',
-    fontSize: 13,
-    fontFamily: font.secondary,
-  },
-  cardCount: {
-    color: '#7CB33D',
-    fontSize: 13,
-    fontFamily: font.secondary,
-    marginTop: 4,
-  },
-  icons: {
-    width: 25,
-    height: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-    backgroundColor: '#75AB38',
-  },
-  userCard: {
     backgroundColor: '#fff',
+    marginVertical: 10,
+    marginHorizontal: 16,
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
-    borderRadius: 10,
-    elevation: 3,
+    elevation: 5, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   sideBox: {
-    width: '30%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoBox: {
-    width: '70%',
+    width: 60,
+    height: 60,
+    marginRight: 16,
   },
   avatar: {
     width: 60,
     height: 60,
     borderRadius: 30,
     backgroundColor: '#ccc',
+    resizeMode: 'cover',
+  },
+  infoBox: {
+    flex: 1,
   },
   name: {
     fontSize: 18,
     fontFamily: font.secondary,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   status: {
-    marginTop: 6,
-    fontFamily: font.secondary,
+    marginTop: 8,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 6,
     alignSelf: 'flex-start',
+    fontFamily: font.secondary,
   },
   active: {
     backgroundColor: '#d4edda',
@@ -307,33 +285,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8d7da',
     color: '#721c24',
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'flex-end',
-  },
-  viewBtn: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  editBtn: {
-    backgroundColor: 'gray',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  deleteBtn: {
-    backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+  topIcon: {
     marginLeft: 10,
+    backgroundColor: '#75AB38',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
   },
-  btnText: {
-    color: 'white',
+  title: {
+    fontSize: 25,
     fontFamily: font.secondary,
+    marginBottom: 10,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
 });
+

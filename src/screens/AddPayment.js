@@ -5,6 +5,7 @@ import {
     StyleSheet,
     ScrollView,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import React, { useState } from 'react';
 import { font } from '../components/ThemeStyle';
@@ -13,6 +14,7 @@ import {  Modal, Portal, TextInput } from 'react-native-paper';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertModal from '../components/CustomAlert';
 
 
 
@@ -26,34 +28,99 @@ export default function AddPayment() {
         accNum: '',
         accTitle:'',
     });
+    const [loading, setLoading] = useState(false);
+      const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); // or 'success'
 
     const [paymentModeModalVisible, setPaymentModeModalVisible] = useState(false);
 
     const paymentModeOptions = ['Cash', 'Bank', 'Easypaisa', 'Jazzcash'];
 
-    const handleSave = async () => {
-         const db = await AsyncStorage.getItem('db_name');
-        const payload = {
-            bank_name : values.bankname,
-            type : values.paymentMode,
-            account_title:values.accTitle,
-            account_number:values.accNum,
-            iban_number:values.iban,
-            db_name: db
-        }
-        console.log('Values from state:', payload);
-        try {
-           
-            const response  = await axios.post(`${ApiUrl}/api/payment` , payload);
-            console.log(response);
-            Alert.alert('Account Added')
-        } catch (error) {
-            console.log(error.message)
-        }
-    };
+    const validateForm = () => {
+  if (!values.paymentMode) {
+    setModalType('danger');
+    setModalMessage('Please select a payment mode');
+    setModalVisible(true);
+    return false;
+  }
+
+  if (values.paymentMode === 'Bank' && !values.bankname.trim()) {
+    setModalType('danger');
+    setModalMessage('Bank name is required');
+    setModalVisible(true);
+    return false;
+  }
+
+  if (!values.accTitle.trim()) {
+    setModalType('danger');
+    setModalMessage('Account title is required');
+    setModalVisible(true);
+    return false;
+  }
+
+  if (!values.accNum.trim()) {
+    setModalType('danger');
+    setModalMessage('Account number is required');
+    setModalVisible(true);
+    return false;
+  }
+
+  if (!values.iban.trim()) {
+    setModalType('danger');
+    setModalMessage('IBAN is required');
+    setModalVisible(true);
+    return false;
+  }
+
+  return true;
+};
+
+const handleSave = async () => {
+  if (!validateForm()) return;
+
+  const db = await AsyncStorage.getItem('db_name');
+  setLoading(true);
+
+  const payload = {
+    bank_name: values.bankname,
+    type: values.paymentMode,
+    account_title: values.accTitle,
+    account_number: values.accNum,
+    iban_number: values.iban,
+    db_name: db
+  };
+
+  try {
+    const response = await axios.post(`${ApiUrl}/api/payment`, payload);
+    setModalType('success');
+    setModalMessage('Account Added Successfully');
+    setModalVisible(true);
+  } catch (error) {
+    console.log(error);
+    setModalType('danger');
+    setModalMessage('Validation Error');
+    setModalVisible(true);
+  } finally {
+    setLoading(false);
+  }
+};
+      if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
             <Text style={styles.sectionTitle}>Expense Information</Text>
 
             <View style={styles.row}>
@@ -89,6 +156,7 @@ export default function AddPayment() {
                 <TextInput
                     placeholder="ACCOUNT NUMBER"
                     value={values.accNum}
+                     keyboardType='numeric'
                     onChangeText={text => setValues({ ...values, accNum: text })}
                     underlineColor="transparent"
                     style={styles.input}
@@ -192,6 +260,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         // marginTop: 20,
     },
+      loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
     saveBtnText: {
         color: '#fff',
         fontSize: 16,

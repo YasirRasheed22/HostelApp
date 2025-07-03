@@ -9,6 +9,7 @@ import {
     FlatList,
     StyleSheet,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +17,7 @@ import axios from 'axios';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Button } from 'react-native-paper';
 import { ApiUrl } from '../../config/services';
+import AlertModal from '../components/CustomAlert';
 
 export default function EditFee() {
     const route = useRoute();
@@ -23,11 +25,15 @@ export default function EditFee() {
 
     const navigation = useNavigation();
     const { id } = route.params;
+    const [loading, setLoading] = useState(true);
 
     const [feeData, setFeeData] = useState(null);
     const [userOptions, setUserOptions] = useState([]);
     const [accountOption, setAccountOption] = useState([]);
     const [accOptions, setAccOptions] = useState([]);
+    const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [dropdown, setDropdown] = useState({ key: null });
 
@@ -98,6 +104,8 @@ export default function EditFee() {
                 setForm(updatedForm);
             } catch (err) {
                 console.log('Fee Fetch Error:', err.message);
+            }finally{
+                setLoading(false);
             }
         };
 
@@ -115,6 +123,8 @@ export default function EditFee() {
                 setUserOptions(options);
             } catch (error) {
                 console.log('Staff Fetch Error:', error.message);
+            }finally{
+                setLoading(false);
             }
         };
 
@@ -138,6 +148,7 @@ export default function EditFee() {
 
     const onSave = async () => {
         try {
+            setLoading(true);
             const db = await AsyncStorage.getItem('db_name');
 
             const selectedUserObj = staffMembers.find(
@@ -159,7 +170,9 @@ export default function EditFee() {
             };
 
             if (!payload.payment_id || !payload.selectedUser) {
-                Alert.alert('Error', 'Please select a valid user and account.');
+                setModalType('danger');
+        setModalMessage('Select a valid User');
+        setModalVisible(true);
                 return;
             }
 
@@ -167,16 +180,29 @@ export default function EditFee() {
 
             const response = await axios.post(`${ApiUrl}/api/fees/single/${id}`, payload);
             console.log(response)
-            Alert.alert('Success', 'Fee updated successfully');
+            
+           setModalType('success');
+        setModalMessage('Fee Updated Successfully');
+        setModalVisible(true);
             navigation.goBack();
         } catch (err) {
             console.log('Save Error:', err.message);
-            Alert.alert('Error', 'Failed to update fee');
+             setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+        }finally{
+            setLoading(false);
         }
     };
 
 
-
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
     const renderDropdown = (label, key) => (
         <View style={styles.dropdownContainer}>
             <Text style={styles.label}>{label}</Text>
@@ -197,6 +223,12 @@ export default function EditFee() {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+             <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
             <Text style={styles.heading}>Edit {tenant.name} Fee</Text>
 
             <View style={styles.infoBox}>
@@ -376,6 +408,13 @@ containedButton: {
   backgroundColor: '#6A9A35',
   marginLeft: 5,
 },
+
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
 
 outlinedText: {
   color: '#000',

@@ -5,16 +5,18 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {font} from '../components/ThemeStyle';
-import {Button, Modal, Portal, TextInput} from 'react-native-paper';
+import React, { useEffect, useState } from 'react';
+import { font } from '../components/ThemeStyle';
+import { Button, Modal, Portal, TextInput } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import {ApiUrl} from '../../config/services';
-import {useIsFocused} from '@react-navigation/native';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import { ApiUrl } from '../../config/services';
+import { useIsFocused } from '@react-navigation/native';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import AlertModal from '../components/CustomAlert';
 
 export default function AddExpense() {
   const [staff, setStaffMembers] = useState();
@@ -23,35 +25,35 @@ export default function AddExpense() {
   const [fileName, setFileName] = useState(null);
 
   const handleUpload = () => {
-  Alert.alert(
-    'Upload File',
-    'Choose a method',
-    [
-      {
-        text: 'Camera',
-        onPress: async () => {
-          const result = await launchCamera({mediaType: 'photo'});
-          if (!result.didCancel) {
-            setFileName(result.assets[0]);
-            console.log(result.assets[0]);
-          }
+    Alert.alert(
+      'Upload File',
+      'Choose a method',
+      [
+        {
+          text: 'Camera',
+          onPress: async () => {
+            const result = await launchCamera({ mediaType: 'photo' });
+            if (!result.didCancel) {
+              setFileName(result.assets[0]);
+              console.log(result.assets[0]);
+            }
+          },
         },
-      },
-      {
-        text: 'Gallery',
-        onPress: async () => {
-          const result = await launchImageLibrary({mediaType: 'photo'});
-          if (!result.didCancel) {
-            setFileName(result.assets[0]); // ✅ FIXED — use whole object
-            console.log(result.assets[0]);
-          }
+        {
+          text: 'Gallery',
+          onPress: async () => {
+            const result = await launchImageLibrary({ mediaType: 'photo' });
+            if (!result.didCancel) {
+              setFileName(result.assets[0]); // ✅ FIXED — use whole object
+              console.log(result.assets[0]);
+            }
+          },
         },
-      },
-      {text: 'Cancel', style: 'cancel'},
-    ],
-    {cancelable: true},
-  );
-};
+        { text: 'Cancel', style: 'cancel' },
+      ],
+      { cancelable: true },
+    );
+  };
 
 
   useEffect(() => {
@@ -85,9 +87,13 @@ export default function AddExpense() {
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); // or 'success'
   const [expenseTypeModalVisible, setExpenseTypeModalVisible] = useState(false);
   const [paymentModeModalVisible, setPaymentModeModalVisible] = useState(false);
   const [userModalVisible, setusersModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const expenseTypeOptions = [
     'Rent',
@@ -113,55 +119,74 @@ export default function AddExpense() {
   const paymentModeOptions = ['cash', 'bank_transfer', 'easypaisa', 'jazzcash'];
   const users = staff;
 
- const handleSave = async () => {
-  const db = await AsyncStorage.getItem('db_name');
+  const handleSave = async () => {
 
-  const formData = new FormData();
+    const db = await AsyncStorage.getItem('db_name');
 
-  formData.append('title', values.title);
-  formData.append('price', values.expensePrice);
-  formData.append('date_for', values.expenseDate); 
-  formData.append('payment_type', values.paymentMode);
-  formData.append('description', values.desc);
-  formData.append('expense_type', values.expenseType);
-  formData.append('expense_made_by', values.user);
-  formData.append('if_other_expense_type', '');
-  formData.append('db_name', db);
+    const formData = new FormData();
+    setLoading(true);
+    formData.append('title', values.title);
+    formData.append('price', values.expensePrice);
+    formData.append('date_for', values.expenseDate);
+    formData.append('payment_type', values.paymentMode);
+    formData.append('description', values.desc);
+    formData.append('expense_type', values.expenseType);
+    formData.append('expense_made_by', values.user);
+    formData.append('if_other_expense_type', '');
+    formData.append('db_name', db);
 
- if (fileName) {
- formData.append('attachments[]', {
-  uri: fileName.uri,
-  type: fileName.type,
-  name: fileName.fileName || `upload-${Date.now()}.jpg`,
-});
+    if (fileName) {
+      formData.append('attachments[]', {
+        uri: fileName.uri,
+        type: fileName.type,
+        name: fileName.fileName || `upload-${Date.now()}.jpg`,
+      });
 
-
-}
-
-
-  try {
-    const response = await axios.post(`${ApiUrl}/api/expenses`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    Alert.alert('Success', 'Expense Added Successfully');
-    console.log('Response:', response.data);
-  } catch (error) {
-    console.error('Upload error:', error.message);
+    }
+    try {
+      const response = await axios.post(`${ApiUrl}/api/expenses`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setLoading(false);
+      setModalType('success');
+      setModalMessage('Expense Added');
+      setModalVisible(true);
+      console.log('Response:', response.data);
+    } catch (error) {
+      setModalType('danger');
+      setModalMessage('Validation Error');
+      setModalVisible(true);
+      console.error('Upload error:', error.message);
+    } finally {
+      setLoading(false)
+    }
+  };
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
   }
-};
 
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <AlertModal
+        visible={modalVisible}
+        onDismiss={() => setModalVisible(false)}
+        message={modalMessage}
+        type={modalType}
+      />
       <Text style={styles.sectionTitle}>Expense Information</Text>
 
       <View style={styles.row}>
         <TextInput
           placeholder="TITLE"
           value={values.title}
-          onChangeText={text => setValues({...values, title: text})}
+          onChangeText={text => setValues({ ...values, title: text })}
           underlineColor="transparent"
           style={styles.input}
         />
@@ -169,7 +194,7 @@ export default function AddExpense() {
         <TextInput
           placeholder="EXPENSE PRICE"
           value={values.expensePrice}
-          onChangeText={text => setValues({...values, expensePrice: text})}
+          onChangeText={text => setValues({ ...values, expensePrice: text })}
           underlineColor="transparent"
           style={styles.input}
           keyboardType="numeric"
@@ -198,13 +223,13 @@ export default function AddExpense() {
             value={new Date()}
             mode="date"
             display="default"
-           onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (event.type === 'set' && selectedDate) {
-             const formattedDate = selectedDate.toISOString().split('T')[0];
-              setValues(prev => ({ ...prev, expenseDate: formattedDate }));
-            }
-          }}
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(false);
+              if (event.type === 'set' && selectedDate) {
+                const formattedDate = selectedDate.toISOString().split('T')[0];
+                setValues(prev => ({ ...prev, expenseDate: formattedDate }));
+              }
+            }}
 
           />
         )}
@@ -229,26 +254,26 @@ export default function AddExpense() {
           multiline
           numberOfLines={4}
           value={values.desc}
-          onChangeText={text => setValues({...values, desc: text})}
+          onChangeText={text => setValues({ ...values, desc: text })}
           underlineColor="transparent"
-          style={[ styles.input, {height: 100, textAlignVertical: 'auto'}]}
+          style={[styles.input, { height: 100, textAlignVertical: 'auto' }]}
         />
       </View>
 
-      <View style={{padding: 16}}>
-        <Text style={{marginBottom: 12}}>
+      <View style={{ padding: 16 }}>
+        <Text style={{ marginBottom: 12 }}>
           Please upload a supporting document or photo.
         </Text>
 
         <TouchableOpacity style={styles.uploadBtn} onPress={handleUpload}>
-           <Text style={styles.saveBtnText}>Upload File</Text>
+          <Text style={styles.saveBtnText}>Upload File</Text>
         </TouchableOpacity>
 
-       {fileName && (
-  <Text style={{marginTop: 10, color: 'green'}}>
-    Selected: {fileName.uri}
-  </Text>
-)}
+        {fileName && (
+          <Text style={{ marginTop: 10, color: 'green' }}>
+            Selected: {fileName.uri}
+          </Text>
+        )}
       </View>
 
       <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
@@ -262,12 +287,12 @@ export default function AddExpense() {
           onDismiss={() => setExpenseTypeModalVisible(false)}
           contentContainerStyle={styles.modalContainer}>
           <Text style={styles.modalTitle}>Select Expense Type</Text>
-          <ScrollView style={{maxHeight: 300}}>
+          <ScrollView style={{ maxHeight: 300 }}>
             {expenseTypeOptions.map(item => (
               <TouchableOpacity
                 key={item}
                 onPress={() => {
-                  setValues(prev => ({...prev, expenseType: item}));
+                  setValues(prev => ({ ...prev, expenseType: item }));
                   setExpenseTypeModalVisible(false);
                 }}
                 style={styles.modalItem}>
@@ -294,12 +319,12 @@ export default function AddExpense() {
           onDismiss={() => setPaymentModeModalVisible(false)}
           contentContainerStyle={styles.modalContainer}>
           <Text style={styles.modalTitle}>Select Payment Mode</Text>
-          <ScrollView style={{maxHeight: 300}}>
+          <ScrollView style={{ maxHeight: 300 }}>
             {paymentModeOptions.map(item => (
               <TouchableOpacity
                 key={item}
                 onPress={() => {
-                  setValues(prev => ({...prev, paymentMode: item}));
+                  setValues(prev => ({ ...prev, paymentMode: item }));
                   setPaymentModeModalVisible(false);
                 }}
                 style={styles.modalItem}>
@@ -325,12 +350,12 @@ export default function AddExpense() {
           onDismiss={() => setusersModalVisible(false)}
           contentContainerStyle={styles.modalContainer}>
           <Text style={styles.modalTitle}>Select User</Text>
-          <ScrollView style={{maxHeight: 300}}>
+          <ScrollView style={{ maxHeight: 300 }}>
             {users?.map(item => (
               <TouchableOpacity
                 key={item.id}
                 onPress={() => {
-                  setValues(prev => ({...prev, user: item.id}));
+                  setValues(prev => ({ ...prev, user: item.id }));
                   setusersModalVisible(false);
                 }}
                 style={styles.modalItem}>

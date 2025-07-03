@@ -5,8 +5,9 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { font } from '../components/ThemeStyle';
@@ -17,6 +18,7 @@ import { ApiUrl } from '../../config/services';
 
 export default function Attendence() {
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(true);
   const [counter , setCount] = useState();
 
   useEffect(()=>{
@@ -32,6 +34,8 @@ export default function Attendence() {
          setCount(response.data);
       } catch (error) {
         console.log(error.message)
+      }finally{
+        setLoading(false);
       }
     }
 
@@ -52,8 +56,8 @@ export default function Attendence() {
     }
     
   }
-
-   navigation.setOptions({
+    useLayoutEffect(()=>{
+navigation.setOptions({
       headerTitle: 'Attendence',
        headerTitleStyle:{fontSize: 15,fontFamily:font.secondary},
        headerRight:()=>{
@@ -64,12 +68,22 @@ export default function Attendence() {
                );
        }
     })
+    },[navigation])
+   
   const reports = [
     {label: 'Total', count: counter?.totalCount, icon: 'file-text-o' , data:'all'},
     {label: 'In', count: counter?.presentCount, icon: 'file-text-o' , data:'in'},
     {label: 'Out', count: counter?.absentCount, icon: 'file-text-o' , data:'out'},
     {label: 'Leave', count:counter?.leaveCount, icon: 'file-text-o', data:'leave'},
   ];
+
+    if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -95,6 +109,12 @@ export default function Attendence() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#F9F9F9',
+  },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#F9F9F9',
   },
   container: {

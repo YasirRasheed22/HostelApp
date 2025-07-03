@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import React, { useEffect, useState } from 'react';
@@ -20,6 +21,7 @@ import { font } from '../components/ThemeStyle';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertModal from '../components/CustomAlert';
 
 const formatDisplayDate = (reportDate) => {
   if (!reportDate) return '';
@@ -46,7 +48,7 @@ const ReportCard = ({ user, onView, onDelete }) => (
         </Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => onDelete(user.id)} style={styles.deleteBtn}>
-        <Text style={styles.btnText}>Delete</Text>
+        <AntDesign name='delete' />
       </TouchableOpacity>
     </View>
   </View>
@@ -55,6 +57,11 @@ const ReportCard = ({ user, onView, onDelete }) => (
 export default function InActiveTenantReport() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
+    const [loading , setLoading] = useState(true)
+
   const [reportList, setReportList] = useState([]);
  
   useEffect(() => {
@@ -73,6 +80,8 @@ export default function InActiveTenantReport() {
       
       } catch (error) {
         console.log('Fetch Error:', error.message);
+      }finally{
+        setLoading(false)
       }
     };
 
@@ -123,10 +132,19 @@ export default function InActiveTenantReport() {
     if (report?.fileUrl) {
       downloadFile(report.fileUrl);
     } else {
-      Alert.alert('Error', 'File URL is missing');
+        setModalType('danger');
+        setModalMessage('Url is missing');
+        setModalVisible(true);
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
  const handleDelete = id => {
     console.log('Delete:', id);
     Alert.alert(
@@ -163,6 +181,12 @@ export default function InActiveTenantReport() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
       <ScrollView contentContainerStyle={styles.container}>
        
         <View style={styles.container2}>
@@ -235,6 +259,12 @@ const styles = StyleSheet.create({
     color: '#7CB33D',
     fontFamily: font.secondary,
   },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
   cardCount: {
     fontSize: 13,
     fontFamily: font.secondary,
@@ -276,11 +306,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginRight: 10,
   },
-  deleteBtn: {
+deleteBtn: {
     backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 19,
     borderRadius: 6,
+    marginRight: 10,
   },
   btnText: {
     color: 'white',

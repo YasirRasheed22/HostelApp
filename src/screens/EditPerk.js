@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, Pressable, ActivityIndicator } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Provider, TextInput } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
 import { useRoute } from '@react-navigation/native';
+import AlertModal from '../components/CustomAlert';
 
 export default function EditPerk() {
     const [showStartPicker, setShowStartPicker] = useState(false);
@@ -13,6 +14,10 @@ export default function EditPerk() {
 
     const [title, setTitle] = useState('');
     const [price, setPrice] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
+    const [modalType, setModalType] = useState('danger');
     const [status, setStatus] = useState('');
     const [perkType, setPerkType] = useState('');
 
@@ -20,55 +25,80 @@ export default function EditPerk() {
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
     const route = useRoute();
-    const {id} = route.params;
+    const { id } = route.params;
     console.log(id)
 
     useEffect(() => {
-    const fetchPerk = async () => {
-        const db = await AsyncStorage.getItem('db_name');
-        try {
-            const response = await axios.put(`${ApiUrl}/api/fees/perks/single/${id}`, { db_name: db });
-            console.log(response.data);
+        const fetchPerk = async () => {
+            const db = await AsyncStorage.getItem('db_name');
+            try {
+                const response = await axios.put(`${ApiUrl}/api/fees/perks/single/${id}`, { db_name: db });
+                console.log(response.data);
 
-            const data = response.data?.perk;
+                const data = response.data?.perk;
 
-            setTitle(data?.title || '');
-            setPerkType(data?.perk_type || '');
-            setStatus(data?.status || '');
-            setPrice(data?.price?.toString() || ''); 
-            setDate(new Date(data?.affectedDate));   
+                setTitle(data?.title || '');
+                setPerkType(data?.perk_type || '');
+                setStatus(data?.status || '');
+                setPrice(data?.price?.toString() || '');
+                setDate(new Date(data?.affectedDate));
 
-        } catch (error) {
-            console.log(error.message);
-        }
-    };
-    fetchPerk();
-}, []);
+            } catch (error) {
+                console.log(error.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPerk();
+    }, []);
 
 
 
     const handleSubmit = async () => {
+        setLoading(true);
         const db = await AsyncStorage.getItem('db_name');
         const payload = {
             db_name: db,
-            affectedDate : date,
-            perk_type : perkType,
+            affectedDate: date,
+            perk_type: perkType,
             price: price,
-            status : status,
+            status: status,
             title: title
         };
         console.log(payload);
         try {
             const response = await axios.post(`${ApiUrl}/api/fees/perks/single/${id}`, payload);
             console.log(response.data);
-            Alert.alert('Success', 'Perk Updated successfully');
+            setModalType('success');
+            setModalMessage('Perk Updated Successfully');
+            setModalVisible(true);
         } catch (error) {
             console.log(error.message);
+            setModalType('danger');
+            setModalMessage('Validation Error');
+            setModalVisible(true);
+
+        } finally {
+            setLoading(false);
         }
     };
 
+    if (loading) {
+        return (
+            <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#75AB38" />
+            </View>
+        );
+    }
+
     return (
         <Provider>
+            <AlertModal
+                visible={modalVisible}
+                onDismiss={() => setModalVisible(false)}
+                message={modalMessage}
+                type={modalType}
+            />
             <View style={styles.container}>
                 <TextInput
                     placeholder="Title"

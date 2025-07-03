@@ -8,17 +8,19 @@ import {
   Image,
   PermissionsAndroid,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
-import React, {useState} from 'react';
-import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import React, { useLayoutEffect, useState } from 'react';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
-import {Modal, PaperProvider, Portal, TextInput} from 'react-native-paper';
+import { Modal, PaperProvider, Portal, TextInput } from 'react-native-paper';
 import CheckBox from '@react-native-community/checkbox';
-import {font} from '../components/ThemeStyle';
-import {useNavigation} from '@react-navigation/native';
+import { font } from '../components/ThemeStyle';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import {ApiUrl} from '../../config/services';
+import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertModal from '../components/CustomAlert';
 
 const facilitiesList = [
   'Tenants',
@@ -36,11 +38,15 @@ export default function AddStaff() {
   const [cnic, setCnic] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
   const [salary, setSalary] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
+  const [loading, setLoading] = useState(false);
   const [role, setRole] = useState('');
   const [paymentDateModalVisible, setPaymentDateModalVisible] = useState(false);
   const [roleModalVisible, setRoleModalVisible] = useState(false);
@@ -48,22 +54,26 @@ export default function AddStaff() {
   const [checkAll, setCheckAll] = useState(false);
   const navigation = useNavigation();
 
-  navigation.setOptions({
-    headerTitle: 'Add Staff',
-    headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
-    //  headerRight:()=>{
-    //          return(
-    //            <View style={{ flexDirection: 'row' }}>
-    //           <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
-    //               <AntDesign name="retweet" size={22} color="#fff" />
-    //             </TouchableOpacity>
-    //           <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
-    //             <AntDesign name="adduser" size={22} color="#fff" />
-    //           </TouchableOpacity>
-    //           </View>
-    //          );
-    //  }
-  });
+  useLayoutEffect(() => {
+
+    navigation.setOptions({
+      headerTitle: 'Add Staff',
+      headerTitleStyle: { fontSize: 15, fontFamily: font.secondary },
+      //  headerRight:()=>{
+      //          return(
+      //            <View style={{ flexDirection: 'row' }}>
+      //           <TouchableOpacity onPress={toggleView} style={styles.topIcon}>
+      //               <AntDesign name="retweet" size={22} color="#fff" />
+      //             </TouchableOpacity>
+      //           <TouchableOpacity onPress={()=>navigation.navigate('AddTenant')} style={styles.topIcon}>
+      //             <AntDesign name="adduser" size={22} color="#fff" />
+      //           </TouchableOpacity>
+      //           </View>
+      //          );
+      //  }
+    });
+
+  }, [navigation])
 
   const toggleFacility = item => {
     const exists = selectedFacilities.includes(item);
@@ -107,14 +117,14 @@ export default function AddStaff() {
 
   const handleImagePick = () => {
     Alert.alert('Choose Option', 'Camera or Gallery', [
-      {text: 'Take Photo', onPress: handleCameraLaunch},
-      {text: 'Choose Gallery', onPress: openImagePicker},
-      {text: 'Cancel', style: 'cancel'},
+      { text: 'Take Photo', onPress: handleCameraLaunch },
+      { text: 'Choose Gallery', onPress: openImagePicker },
+      { text: 'Cancel', style: 'cancel' },
     ]);
   };
 
   const openImagePicker = () => {
-    launchImageLibrary({mediaType: 'photo'}, response => {
+    launchImageLibrary({ mediaType: 'photo' }, response => {
       const uri = response.assets?.[0]?.uri;
       if (uri) setSelectedImage(uri);
     });
@@ -125,18 +135,28 @@ export default function AddStaff() {
       Alert.alert('Permission Denied', 'Camera access is required');
       return;
     }
-    launchCamera({mediaType: 'photo'}, response => {
+    launchCamera({ mediaType: 'photo' }, response => {
       const uri = response.assets?.[0]?.uri;
       if (uri) setSelectedImage(uri);
     });
   };
 
   const handleSave = async () => {
+
     if (!name || !phone || !role || !password || password !== confirmPassword) {
-      Alert.alert('Validation Error', 'Please fill all fields correctly.');
+        setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
       return;
     }
-    const db_name =  await AsyncStorage.getItem('db_name');
+    if (!selectedImage) {
+        setModalType('danger');
+        setModalMessage('Upload Photo');
+        setModalVisible(true);
+      return;
+    }
+    setLoading(true);
+    const db_name = await AsyncStorage.getItem('db_name');
     const formData = new FormData();
 
     formData.append('fullName', name);
@@ -150,16 +170,16 @@ export default function AddStaff() {
     formData.append('db_name', db_name);
     formData.append('emergency_contact', emergencyContact);
     formData.append('profile_image', {
-      uri: selectedImage, 
+      uri: selectedImage,
       name: 'profile.jpg',
       type: 'image/jpeg',
     });
 
-  const privilegesObj = {};
-facilitiesList.forEach(item => {
-  privilegesObj[item.toLowerCase()] = selectedFacilities.includes(item);
-});
-formData.append('privileges', JSON.stringify(privilegesObj));
+    const privilegesObj = {};
+    facilitiesList.forEach(item => {
+      privilegesObj[item.toLowerCase()] = selectedFacilities.includes(item);
+    });
+    formData.append('privileges', JSON.stringify(privilegesObj));
 
 
     try {
@@ -170,16 +190,50 @@ formData.append('privileges', JSON.stringify(privilegesObj));
         },
       });
       console.log(response);
+       setModalType('success');
+        setModalMessage('Staff created Successfully');
+        setModalVisible(true);
+      setLoading(false);
     } catch (error) {
+      if(error.status === 400)
+      {
+        setModalType('danger');
+        setModalMessage('Email already exist');
+        setModalVisible(true);
+      setLoading(false);
+      }else
+      if(error.status === 402)
+      {
+        setModalType('danger');
+        setModalMessage('CNIC already exist');
+        setModalVisible(true);
+      setLoading(false);
+      }
       console.log(error.message);
+      setLoading(false);
+    }
+    finally{
+      setLoading(false);
     }
 
     // Handle save logic here (API call or local state)
-    Alert.alert('Success', 'Staff member added!');
+    // Alert.alert('Success', 'Staff member added!');
   };
-
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <PaperProvider>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
       <ScrollView contentContainerStyle={styles.container}>
         {/* <Text style={styles.title}>Add staff</Text>
         <View style={styles.separator} /> */}
@@ -189,7 +243,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
         <View style={styles.imageContainer}>
           <TouchableOpacity onPress={handleImagePick}>
             {selectedImage ? (
-              <Image source={{uri: selectedImage}} style={styles.roundImage} />
+              <Image source={{ uri: selectedImage }} style={styles.roundImage} />
             ) : (
               <View style={styles.iconCircle}>
                 <EvilIcons name="image" size={50} color="#888" />
@@ -198,7 +252,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
           </TouchableOpacity>
         </View>
 
-        <View style={{gap: 12}}>
+        <View style={{ gap: 12 }}>
           <TextInput
             label="Full Name"
             value={name}
@@ -209,6 +263,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
           <TextInput
             label="CNIC/B-FORM"
             value={cnic}
+            keyboardType="numeric"
             onChangeText={setCnic}
             style={styles.input}
             underlineColor="transparent"
@@ -216,6 +271,7 @@ formData.append('privileges', JSON.stringify(privilegesObj));
           <TextInput
             label="Phone No"
             value={phone}
+            keyboardType="numeric"
             onChangeText={setPhone}
             style={styles.input}
             underlineColor="transparent"
@@ -223,13 +279,14 @@ formData.append('privileges', JSON.stringify(privilegesObj));
           <TextInput
             label="E-Mail"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={text => setEmail(text.toLowerCase())}
             style={styles.input}
             underlineColor="transparent"
           />
           <TextInput
             label="Salary"
             value={salary}
+            keyboardType='numeric'
             onChangeText={setSalary}
             style={styles.input}
             underlineColor="transparent"
@@ -247,20 +304,28 @@ formData.append('privileges', JSON.stringify(privilegesObj));
               visible={paymentDateModalVisible}
               onDismiss={() => setPaymentDateModalVisible(false)}
               contentContainerStyle={styles.modalContainer}>
+
               <Text style={styles.modalTitle}>Select Payment Date</Text>
-              {['01', '02', '03'].map(item => (
-                <TouchableOpacity
-                  key={item}
-                  onPress={() => {
-                    setPaymentDate(item);
-                    setPaymentDateModalVisible(false);
-                  }}
-                  style={styles.modalItem}>
-                  <Text style={styles.modalItemText}>{item}</Text>
-                </TouchableOpacity>
-              ))}
+
+              <ScrollView style={{ maxHeight: 200 }}>
+                {Array.from({ length: 30 }, (_, i) =>
+                  (i + 1).toString().padStart(2, '0'),
+                ).map(item => (
+                  <TouchableOpacity
+                    key={item}
+                    onPress={() => {
+                      setPaymentDate(item);
+                      setPaymentDateModalVisible(false);
+                    }}
+                    style={styles.modalItem}>
+                    <Text style={styles.modalItemText}>{item}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
             </Modal>
           </Portal>
+
 
           <TextInput
             label="Password"
@@ -401,8 +466,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginBottom: 10,
   },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
   modalContainer: {
     backgroundColor: 'white',
+    // maxHeight:300,
     padding: 20,
     margin: 20,
     borderRadius: 10,

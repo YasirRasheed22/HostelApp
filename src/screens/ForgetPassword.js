@@ -21,34 +21,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiUrl } from '../../config/services';
 import { Provider } from 'react-native-paper';
 import AlertModal from '../components/CustomAlert';
-
-const LoginScreen = () => {
-  const navigation = useNavigation();
+export default function ForgetPassword() {
+   const navigation = useNavigation();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  // modal states
+  const [loading , setLoading] = useState(false)
+ 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalType, setModalType] = useState('danger'); // or 'success'
 
   useEffect(() => {
-    const checkUser = async () => {
-      const user = await AsyncStorage.getItem('user');
-      if (user) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Dashboard' }],
-        });
-      }
-      setLoading(false);
-    };
-    checkUser();
+    
+  
   }, []);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email) {
       return(
         setModalType('danger'),
         setModalMessage('Please fill all fields..'),
@@ -59,7 +47,7 @@ const LoginScreen = () => {
     try {
       setLoading(true);
       await AsyncStorage.clear();
-      console.log(`${ApiUrl}/api/helper/login`)
+      
       const payload = { email, password };
       const response = await axios.post(`${ApiUrl}/api/helper/login`, payload);
       console.log(response)
@@ -124,8 +112,10 @@ const LoginScreen = () => {
               style={styles.logo}
             />
 
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Login to Hotel Management System</Text>
+            <Text style={styles.title}>Password is gone?</Text>
+            <Text style={styles.subtitle}>Let's reset it!</Text>
+            <Text style={styles.left}>Please enter your email to receive a link to reset your password.</Text>
+            <Text style={styles.left}>If you are a member, please login.</Text>
 
             <TextInput
               style={styles.input}
@@ -137,25 +127,13 @@ const LoginScreen = () => {
               onChangeText={text => setEmail(text.toLowerCase())}
             />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#aaa"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
-            {/* <TouchableOpacity  onPress={()=>{navigation.navigate('ForgetPassword')}}>
-              <Text style={styles.right} >Forget Password</Text>
-            </TouchableOpacity> */}
+           
 
             <TouchableOpacity style={styles.button} onPress={handleLogin}>
-              <Text style={styles.buttonText}>Login</Text>
+              <Text style={styles.buttonText}>Send</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.linkText}>Don’t have an account? Register</Text>
-            </TouchableOpacity>
+            
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -163,7 +141,6 @@ const LoginScreen = () => {
   );
 };
 
-export default LoginScreen;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -192,6 +169,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+   left: {
+    fontSize: 16,
+    color: '#666',
+    fontFamily: font.primary,
+    marginBottom: 20,
+    textAlign: 'left',
+  },
   input: {
     backgroundColor: '#fff',
     padding: 14,
@@ -217,13 +201,6 @@ const styles = StyleSheet.create({
     color: '#4f46e5',
     textAlign: 'center',
     marginTop: 10,
-    fontFamily: font.secondary,
-  },
-  right: {
-    color: '#689734',
-    textAlign: 'right',
-    marginTop: 0,
-    marginBottom:10,
     fontFamily: font.secondary,
   },
   loaderContainer: {

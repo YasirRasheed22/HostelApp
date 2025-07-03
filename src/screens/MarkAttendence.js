@@ -7,18 +7,25 @@ import {
   FlatList,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
+import AlertModal from '../components/CustomAlert';
 
 export default function MarkAttendance() {
   const [tenants, setTenants] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
   const [selectedTenants, setSelectedTenants] = useState([]);
   const [attendanceType, setAttendanceType] = useState('In');
   const [showTenantDropdown, setShowTenantDropdown] = useState(false);
   const [date, setDate] = useState(null);
+  const [loading , setLoading] = useState(true)
+
   const [tempDate, setTempDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [pickerMode, setPickerMode] = useState('date');
@@ -34,6 +41,8 @@ export default function MarkAttendance() {
         setTenants(data);
       } catch (error) {
         console.log(error.message);
+      }finally{
+        setLoading(false);
       }
     };
     fetchTenants();
@@ -99,10 +108,12 @@ export default function MarkAttendance() {
   };
 
   const handleSave = async () => {
+
     if (selectedTenants.length === 0 || !date) {
       Alert.alert('Missing Info', 'Please select tenants and date/time.');
       return;
     }
+    setLoading(true)
 
     const db = await AsyncStorage.getItem('db_name');
     const payload = {
@@ -119,15 +130,36 @@ export default function MarkAttendance() {
         payload
       );
       console.log(response);
-      Alert.alert('Saved', 'Attendance marked successfully.');
+      setModalType('success');
+        setModalMessage('Attendance marked successfully');
+        setModalVisible(true);
     } catch (error) {
       console.log(error.message);
-      Alert.alert('Error', 'Failed to mark attendance.');
+        setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+    }finally{
+      setLoading(false)
     }
   };
 
+  
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
       <Text style={styles.heading}>Mark Attendance</Text>
 
       {/* In/Out Toggle */}
@@ -318,6 +350,12 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
+  },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   saveText: {
     color: '#fff',

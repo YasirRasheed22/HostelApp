@@ -1,15 +1,19 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, Pressable, ActivityIndicator } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Provider, TextInput } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
+import AlertModal from '../components/CustomAlert';
 
 export default function AddPerk() {
     const [showStartPicker, setShowStartPicker] = useState(false);
     const [date, setDate] = useState(new Date());
-
+    const [loading, setLoading] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
     const [title, setTitle] = useState('');
     const [price, setPrice] = useState('');
     const [status, setStatus] = useState('');
@@ -19,6 +23,7 @@ export default function AddPerk() {
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
     const handleSubmit = async () => {
+        setLoading(true);
         const db = await AsyncStorage.getItem('db_name');
         const payload = {
             db_name: db,
@@ -32,15 +37,35 @@ export default function AddPerk() {
         try {
             const response = await axios.post(`${ApiUrl}/api/fees/perk/create`, payload);
             console.log(response.data);
-            Alert.alert('Success', 'Perk created successfully');
+            setLoading(false);
+              setModalType('success');
+        setModalMessage('Perk created Successfully');
+        setModalVisible(true);
         } catch (error) {
             console.log(error.message);
+              setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+        }finally{
+            setLoading(false)
         }
     };
-
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
     return (
         <Provider>
             <View style={styles.container}>
+                 <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
                 <TextInput
                     placeholder="Title"
                     value={title}
@@ -139,6 +164,12 @@ const styles = StyleSheet.create({
         color: '#333',
         marginBottom: 6,
     },
+      loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
     row: {
         flexDirection: 'row',
         alignItems: 'center',

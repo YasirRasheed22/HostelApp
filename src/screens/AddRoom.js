@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import {ApiUrl} from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertModal from '../components/CustomAlert';
 
 const facilitiesList = [
   'AC',
@@ -32,14 +33,20 @@ const facilitiesList = [
 export default function AddRoom() {
   const navigation = useNavigation();
   const [roomNo, setRoomNo] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
   const [capacity, setCapacity] = useState('');
+  const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
   const [floor, setFloor] = useState('');
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [checkAll, setCheckAll] = useState(false);
   const [otherFacility, setOtherFacility] = useState('');
 
-  navigation.setOptions({
+
+  useLayoutEffect(()=>{
+navigation.setOptions({
     headerTitle: 'Add Room',
     headerTitleStyle: {fontSize: 15, fontFamily: font.secondary},
     //    headerRight:()=>{
@@ -56,6 +63,8 @@ export default function AddRoom() {
     //    }
   });
 
+  },[navigation])
+  
   const toggleFacility = item => {
     const exists = selectedFacilities.includes(item);
     if (exists) {
@@ -79,6 +88,7 @@ export default function AddRoom() {
   };
 
   const handleSave = async () => {
+    setLoading(true);
     const db_name = await AsyncStorage.getItem('db_name');
     // console.log('db_name:....' ,db_name);
     // return false;
@@ -97,15 +107,29 @@ export default function AddRoom() {
 
     try {
       const response = await axios.post(`${ApiUrl}/api/rooms`, payload);
-      Alert.alert('Room Added Successfully');
+      setLoading(false);
+       setModalType('success');
+        setModalMessage('Room created Successfully');
+        setModalVisible(true);
       console.log(response);
     } catch (error) {
       console.log(error);
+       setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+    }finally{
+      setLoading(false)
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
       {/* <View style={styles.titleRow}>
         <Text style={styles.title}>Add Room</Text>
       </View>

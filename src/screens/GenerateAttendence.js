@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { TextInput, Provider } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { font } from '../components/ThemeStyle';
@@ -15,6 +15,7 @@ export default function GenerateAttendence() {
   const [tenants, setTenants] = useState([]);
   const [availableTenants, setAvailableTenants] = useState([]);
   const [selectedTenants, setSelectedTenants] = useState([]);
+    const [loading, setLoading] = useState(true);
 
   const [dateType, setDateType] = useState('single');
   const [reportType, setReportType] = useState('out');
@@ -36,6 +37,9 @@ export default function GenerateAttendence() {
         setAvailableTenants(data);
       } catch (error) {
         console.log(error.message);
+      }finally{
+                    setLoading(false)
+
       }
     };
     fetchTenants();
@@ -61,6 +65,15 @@ export default function GenerateAttendence() {
     setSelectedTenants(selectedTenants.filter(t => t.id !== tenant.id));
     setAvailableTenants([...availableTenants, tenant].sort((a, b) => a.name.localeCompare(b.name)));
   };
+
+  
+    if (loading) {
+      return (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#75AB38" />
+        </View>
+      );
+    }
 
   return (
     <Provider>
@@ -200,6 +213,12 @@ export default function GenerateAttendence() {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
+    backgroundColor: '#F9F9F9',
+  },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#F9F9F9',
   },
   label: {

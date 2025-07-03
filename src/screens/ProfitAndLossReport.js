@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import React, { useEffect, useState } from 'react';
@@ -46,7 +47,7 @@ const ReportCard = ({ user, onView, onDelete }) => (
         </Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => onDelete(user.id)} style={styles.deleteBtn}>
-        <Text style={styles.btnText}>Delete</Text>
+        <AntDesign name='delete' />
       </TouchableOpacity>
     </View>
   </View>
@@ -56,6 +57,8 @@ export default function ProfitAndLossReport() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const [reportList, setReportList] = useState([]);
+    const [loading , setLoading] = useState(true)
+
  
   useEffect(() => {
   
@@ -74,6 +77,8 @@ export default function ProfitAndLossReport() {
         
       } catch (error) {
         console.log('Fetch Error:', error.message);
+      }finally{
+        setLoading(false)
       }
     };
 
@@ -143,6 +148,7 @@ export default function ProfitAndLossReport() {
           style: 'destructive',
           onPress: async () => {
             try {
+              setLoading(true)
               const db = await AsyncStorage.getItem('db_name');
               await axios.delete(`${ApiUrl}/api/report/${id}`, {
                 data: {db_name: db},
@@ -152,6 +158,8 @@ export default function ProfitAndLossReport() {
             } catch (error) {
               console.error('Error deleting Report:', error.message);
               Alert.alert('Error', 'Failed to delete the Report.');
+            }finally{
+              setLoading(false)
             }
           },
         },
@@ -161,6 +169,13 @@ export default function ProfitAndLossReport() {
   };
 
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -241,6 +256,13 @@ const styles = StyleSheet.create({
     fontFamily: font.secondary,
     color: '#7CB33D',
     marginTop: 4,
+
+  },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   icons: {
     width: 25,
@@ -277,11 +299,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginRight: 10,
   },
-  deleteBtn: {
+ deleteBtn: {
     backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 19,
     borderRadius: 6,
+    marginRight: 10,
   },
   btnText: {
     color: 'white',

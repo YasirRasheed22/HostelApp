@@ -8,8 +8,9 @@ import {
   Image,
   PermissionsAndroid,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import { Modal, PaperProvider, Portal, TextInput } from 'react-native-paper';
@@ -19,6 +20,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertModal from '../components/CustomAlert';
 
 const facilitiesList = [
   'Tenants',
@@ -34,8 +36,12 @@ export default function EditStaff() {
   const [selectedImage, setSelectedImage] = useState();
   const [name, setName] = useState('');
   const [cnic, setCnic] = useState('');
+  const [loading, setLoading] = useState(true);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
   const [salary, setSalary] = useState('');
   // const [password, setPassword] = useState('');
   // const [confirmPassword, setConfirmPassword] = useState('');
@@ -81,14 +87,17 @@ export default function EditStaff() {
 
       } catch (error) {
         console.log('Fetch staff error:', error.message);
+      }finally{
+        setLoading(false);
       }
     };
 
     fetchStaff();
   }, []);
 
-  navigation.setOptions({
-    headerTitle: 'Add Staff',
+  useLayoutEffect(()=>{
+     navigation.setOptions({
+    headerTitle: 'Edit Staff',
     headerTitleStyle: { fontSize: 15, fontFamily: font.secondary },
     //  headerRight:()=>{
     //          return(
@@ -103,6 +112,8 @@ export default function EditStaff() {
     //          );
     //  }
   });
+  },[navigation])
+ 
 
   const toggleFacility = item => {
     const exists = selectedFacilities.includes(item);
@@ -170,12 +181,16 @@ export default function EditStaff() {
     });
   };
   const handleSave = async () => {
+
     if (!name || !phone || !role) {
-      Alert.alert('Validation Error', 'Please fill all fields correctly.');
+      setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
       return;
     }
 
     console.log('Calling update API...');
+    setLoading(true);
 
     try {
       const db_name = await AsyncStorage.getItem('db_name');
@@ -222,21 +237,39 @@ export default function EditStaff() {
       );
 
       console.log('API Success:', response.data);
-      Alert.alert('Success', 'Staff updated successfully!');
+      setModalType('success');
+        setModalMessage('Staff Updated Successfully');
+        setModalVisible(true);
       navigation.goBack();
     } catch (error) {
       console.log('Caught error:', error.message);
       if (error.response) {
         console.log('Error Response:', error.response.data);
       }
-      Alert.alert('Error', 'Something went wrong.');
+      setModalType('danger');
+        setModalMessage('Something went wrong..');
+        setModalVisible(true);
+    }finally{
+      setLoading(false);
     }
   };
 
 
-
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <PaperProvider>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
       <ScrollView contentContainerStyle={styles.container}>
         {/* <Text style={styles.title}>Add staff</Text>
         <View style={styles.separator} /> */}
@@ -267,6 +300,7 @@ export default function EditStaff() {
             label="CNIC/B-FORM"
             value={cnic}
             onChangeText={setCnic}
+            keyboardType="numeric"
             style={styles.input}
             underlineColor="transparent"
           />
@@ -274,13 +308,14 @@ export default function EditStaff() {
             label="Phone No"
             value={phone}
             onChangeText={setPhone}
+            keyboardType="numeric"
             style={styles.input}
             underlineColor="transparent"
           />
           <TextInput
             label="E-Mail"
             value={email}
-            onChangeText={setEmail}
+             onChangeText={text => setEmail(text.toLowerCase())}
             style={styles.input}
             underlineColor="transparent"
           />
@@ -300,12 +335,17 @@ export default function EditStaff() {
             </Text>
           </TouchableOpacity>
           <Portal>
-            <Modal
-              visible={paymentDateModalVisible}
-              onDismiss={() => setPaymentDateModalVisible(false)}
-              contentContainerStyle={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Select Payment Date</Text>
-              {['01', '02', '03'].map(item => (
+          <Modal
+            visible={paymentDateModalVisible}
+            onDismiss={() => setPaymentDateModalVisible(false)}
+            contentContainerStyle={styles.modalContainer}>
+            
+            <Text style={styles.modalTitle}>Select Payment Date</Text>
+        
+            <ScrollView style={{ maxHeight: 200 }}>
+              {Array.from({ length: 30 }, (_, i) =>
+                (i + 1).toString().padStart(2, '0'),
+              ).map(item => (
                 <TouchableOpacity
                   key={item}
                   onPress={() => {
@@ -316,8 +356,10 @@ export default function EditStaff() {
                   <Text style={styles.modalItemText}>{item}</Text>
                 </TouchableOpacity>
               ))}
-            </Modal>
-          </Portal>
+            </ScrollView>
+        
+          </Modal>
+        </Portal>
           {/* 
           <TextInput
             label="Password"
@@ -469,6 +511,11 @@ const styles = StyleSheet.create({
     // fontWeight: 'bold',
     fontFamily: font.secondary,
     marginBottom: 10,
+  },  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   modalItem: {
     paddingVertical: 12,

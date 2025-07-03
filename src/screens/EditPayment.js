@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { font } from '../components/ThemeStyle';
@@ -13,6 +14,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiUrl } from '../../config/services';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import AlertModal from '../components/CustomAlert';
 
 export default function EditPayment() {
   const route = useRoute();
@@ -21,6 +23,9 @@ export default function EditPayment() {
 
   const [db, setDb] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
   const [values, setValues] = useState({
     iban: '',
     paymentMode: '',
@@ -54,6 +59,8 @@ export default function EditPayment() {
       } catch (err) {
         console.error('Error fetching payment details:', err.message);
         Alert.alert('Error', 'Failed to load payment details');
+      }finally{
+        setLoading(false);
       }
     };
 
@@ -61,6 +68,7 @@ export default function EditPayment() {
   }, [id]);
 
   const handleUpdate = async () => {
+    setLoading(true);
     const payload = {
       bank_name: values.bankname,
       type: values.paymentMode,
@@ -73,18 +81,38 @@ export default function EditPayment() {
     try {
      const response = await axios.post(`${ApiUrl}/api/payment/${id}`, payload);
       console.log(response)
-      Alert.alert('Success', 'Payment updated successfully');
+       setModalType('success');
+        setModalMessage('Payment Updated Successfully');
+        setModalVisible(true);
       navigation.goBack();
     } catch (error) {
       console.log('Update error:', error.message);
-      Alert.alert('Error', 'Failed to update payment');
+      setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+    }finally{
+      setLoading(false);
     }
   };
 
-  if (loading) return <Text style={{ padding: 20 }}>Loading...</Text>;
+    if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
+
+  // if (loading) return <Text style={{ padding: 20 }}>Loading...</Text>;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
       <Text style={styles.sectionTitle}>Edit Payment</Text>
 
       <TouchableOpacity
@@ -226,6 +254,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomColor: '#eee',
     borderBottomWidth: 1,
+  },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   modalItemText: {
     fontSize: 16,

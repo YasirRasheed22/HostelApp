@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import React, { useEffect, useState } from 'react';
@@ -20,6 +21,7 @@ import { font } from '../components/ThemeStyle';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertModal from '../components/CustomAlert';
 
 const formatDisplayDate = (reportDate) => {
   if (!reportDate) return '';
@@ -46,7 +48,7 @@ const ReportCard = ({ user, onView, onDelete }) => (
         </Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => onDelete(user.id)} style={styles.deleteBtn}>
-        <Text style={styles.btnText}>Delete</Text>
+        <AntDesign name='delete' />
       </TouchableOpacity>
     </View>
   </View>
@@ -55,6 +57,10 @@ const ReportCard = ({ user, onView, onDelete }) => (
 export default function ActiveTenantReport() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const [loading, setLoading] = useState(true);
+    const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); // or 'success'
   const [reportList, setReportList] = useState([]);
  
   useEffect(() => {
@@ -64,12 +70,14 @@ export default function ActiveTenantReport() {
   }, [isFocused]);
 
     const fetchReports = async () => {
+      setLoading(true);
       const db = await AsyncStorage.getItem('db_name');
       try {
         const res = await axios.put(`${ApiUrl}/api/report`, { db_name: db });
         const reports = res.data?.data || [];
 
         setReportList(reports.filter(r => r.reportType === 'Active Tenants Report'));
+        setLoading(false);
         
       } catch (error) {
         console.log('Fetch Error:', error.message);
@@ -123,7 +131,9 @@ export default function ActiveTenantReport() {
     if (report?.fileUrl) {
       downloadFile(report.fileUrl);
     } else {
-      Alert.alert('Error', 'File URL is missing');
+      setModalType('danger');
+        setModalMessage('File Url is missing...');
+        setModalVisible(true);
     }
   };
 
@@ -160,10 +170,22 @@ export default function ActiveTenantReport() {
   };
 
 
-
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
+        <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
        
         <View style={styles.container2}>
           {/* <Text style={styles.sectionTitle}>Generated Reports</Text> */}
@@ -208,6 +230,11 @@ const styles = StyleSheet.create({
     fontFamily: font.secondary,
     color: '#4E4E5F',
     marginBottom: 10,
+  },  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   cardList: {
     flexDirection: 'row',
@@ -278,9 +305,10 @@ const styles = StyleSheet.create({
   },
   deleteBtn: {
     backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 19,
     borderRadius: 6,
+    marginRight: 10,
   },
   btnText: {
     color: 'white',

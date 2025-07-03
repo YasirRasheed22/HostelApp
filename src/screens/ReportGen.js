@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     Pressable,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -15,6 +16,7 @@ import { font } from '../components/ThemeStyle';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
+import AlertModal from '../components/CustomAlert';
 
 export default function ReportGen() {
     const navigation = useNavigation();
@@ -24,7 +26,13 @@ export default function ReportGen() {
 
     const [payAcc, setPayAcc] = useState([]);
     const [reportType, setReportType] = useState();
+    const [loading, setLoading] = useState(true)
+
     const [payments, setPayment] = useState();
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
+    const [modalType, setModalType] = useState('danger');
 
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
@@ -44,6 +52,8 @@ export default function ReportGen() {
                 setPayAcc(response.data?.payments);
             } catch (error) {
                 console.log(error.message)
+            } finally {
+                setLoading(false)
             }
         }
 
@@ -51,50 +61,60 @@ export default function ReportGen() {
     }, [])
 
     const formatDate = (date) => {
-  if (!date) return '';
-  const options = { day: '2-digit', month: 'short', year: 'numeric' };
-  return new Intl.DateTimeFormat('en-GB', options).format(new Date(date));
-};
-
-const handleSubmit = async () => {
-    console.log('Submit pressed');
-
-    if (!reportType) {
-        Alert.alert('Missing', 'Please select a report type');
-        return;
-    }
-
-    if (reportType === 'Payment Report' && !payments?.id) {
-        Alert.alert('Missing', 'Please select a payment account');
-        return;
-    }
-
-    const db = await AsyncStorage.getItem('db_name');
-    const user = await AsyncStorage.getItem('user');
-    const json = JSON.parse(user)
-
-
-    const payload = {
-        db_name: db,
-        startDate:startDate?.toISOString(), // Safe access
-        endDate: endDate?.toISOString(),
-        reportType: reportType,
-        payment_bank_id: payments?.id || null, // safe fallback
-        user_id:json.id
+        if (!date) return '';
+        const options = { day: '2-digit', month: 'short', year: 'numeric' };
+        return new Intl.DateTimeFormat('en-GB', options).format(new Date(date));
     };
 
-    console.log('Payload:', payload);
+    const handleSubmit = async () => {
+        console.log('Submit pressed');
 
-    try {
-        console.log('API running');
-        const response = await axios.post(`${ApiUrl}/api/report/generate`, payload);
-        console.log(response.data);
-        Alert.alert('Report Generated');
-    } catch (error) {
-        console.log('API error:', error.message);
-        Alert.alert('Error', 'Failed to generate report.');
-    }
-};
+        if (!reportType) {
+            setModalType('danger');
+            setModalMessage('Please select a report type');
+            setModalVisible(true);
+            return;
+        }
+
+        if (reportType === 'Payment Report' && !payments?.id) {
+            setModalType('danger');
+            setModalMessage('Please select a payment account');
+            setModalVisible(true);
+            return;
+        }
+        setLoading(true)
+        const db = await AsyncStorage.getItem('db_name');
+        const user = await AsyncStorage.getItem('user');
+        const json = JSON.parse(user)
+
+
+        const payload = {
+            db_name: db,
+            startDate: startDate?.toISOString(), // Safe access
+            endDate: endDate?.toISOString(),
+            reportType: reportType,
+            payment_bank_id: payments?.id || null, // safe fallback
+            user_id: json.id
+        };
+
+        console.log('Payload:', payload);
+
+        try {
+            console.log('API running');
+            const response = await axios.post(`${ApiUrl}/api/report/generate`, payload);
+            console.log(response.data);
+            setModalType('success');
+            setModalMessage('Report Generated');
+            setModalVisible(true);
+        } catch (error) {
+            console.log('API error:', error.message);
+            setModalType('danger');
+            setModalMessage('Failed to generate report');
+            setModalVisible(true);
+        } finally {
+            setLoading(false)
+        }
+    };
 
 
     useLayoutEffect(() => {
@@ -104,8 +124,23 @@ const handleSubmit = async () => {
         });
     }, [navigation]);
 
+
+    if (loading) {
+        return (
+            <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#75AB38" />
+            </View>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.safeArea}>
+            <AlertModal
+                visible={modalVisible}
+                onDismiss={() => setModalVisible(false)}
+                message={modalMessage}
+                type={modalType}
+            />
             <ScrollView contentContainerStyle={styles.container}>
                 <View>
                     {/* Report Type Dropdown */}
@@ -162,17 +197,17 @@ const handleSubmit = async () => {
                                     <ScrollView>
                                         {payAcc.map((item, index) => (
 
-                                                <TouchableOpacity
-                                                    key={index}
-                                                    style={styles.dropdownItem}
-                                                    onPress={() => {
-                                                        setPayment(item);
-                                                        setShowPaymentDropdown(false);
-                                                    }}
-                                                >
-                                                    <Text>{item?.bank_name || item?.type}- {item?.account_number}</Text>
-                                                </TouchableOpacity>
-                                            )
+                                            <TouchableOpacity
+                                                key={index}
+                                                style={styles.dropdownItem}
+                                                onPress={() => {
+                                                    setPayment(item);
+                                                    setShowPaymentDropdown(false);
+                                                }}
+                                            >
+                                                <Text>{item?.bank_name || item?.type}- {item?.account_number}</Text>
+                                            </TouchableOpacity>
+                                        )
                                         )}
                                     </ScrollView>
                                 </View>
@@ -232,6 +267,12 @@ const styles = StyleSheet.create({
     },
     container: {
         padding: 24,
+    },
+    loaderContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F9F9F9',
     },
     input: {
         padding: 12,

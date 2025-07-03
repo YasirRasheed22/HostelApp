@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import Entypo from 'react-native-vector-icons/Entypo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,8 +15,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const SideDrawer = ({ drawerAnim, drawerOpen, closeDrawer, navigation }) => {
   const [openMenu, setOpenMenu] = useState(null);
   const [allowedPages, setAllowedPages] = useState(null);
+  const [image , setImage] = useState()
+  const [name , setName] = useState()
 
   useEffect(() => {
+    const fetching = async () => {
+  try {
+    const user = await AsyncStorage.getItem('user');
+    const parsedUser = JSON.parse(user); // Parse the whole string first
+    console.log(parsedUser?.profile_image); // See the actual URL
+    setImage(parsedUser?.profile_image);
+    setName(parsedUser?.fullName)
+  } catch (err) {
+    console.error('Error fetching image:', err);
+  }
+};
+
     const fetchPrivileges = async () => {
       try {
         const data = await AsyncStorage.getItem('privileges');
@@ -26,6 +41,7 @@ export const SideDrawer = ({ drawerAnim, drawerOpen, closeDrawer, navigation }) 
       }
     };
     fetchPrivileges();
+    fetching()
   }, []);
 
   const toggleMenu = (label) => {
@@ -66,7 +82,7 @@ export const SideDrawer = ({ drawerAnim, drawerOpen, closeDrawer, navigation }) 
       label: 'Rooms',
       key: 'rooms',
       subpages: [
-        { label: 'List', route: 'Rooms', params: { data: 'AllRoom' } },
+        { label: 'List', route: 'Rooms', params: { data: 'All Rooms' } },
         { label: 'Add New', route: 'AddRoom' },
       ],
     },
@@ -109,6 +125,11 @@ export const SideDrawer = ({ drawerAnim, drawerOpen, closeDrawer, navigation }) 
       ],
     },
     {
+      label: 'Announcements',
+      key: 'staff',
+      subpages: [{ label: 'Announcements', route: 'Announcements' }],
+    },
+    {
       label: 'Reports',
       key: 'reports',
       subpages: [{ label: 'List', route: 'Reports' }],
@@ -129,6 +150,12 @@ export const SideDrawer = ({ drawerAnim, drawerOpen, closeDrawer, navigation }) 
 
       <Animated.View style={[styles.drawer, { left: drawerAnim }]}>
         <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.imageContainer}>
+            <TouchableOpacity onPress={()=>{navigation.navigate('Profile') ; closeDrawer();}} >
+            <Image source={{ uri: image }} style={styles.roundImage} />
+              </TouchableOpacity>
+              <Text style={styles.drawerTitle}>{name}</Text>
+          </View>
           <View style={styles.row}>
             <Text style={styles.drawerTitle}>Menu</Text>
             <Entypo name="cross" size={28} color="#4E4E5F" onPress={closeDrawer} />
@@ -208,6 +235,17 @@ const styles = StyleSheet.create({
   drawerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  imageContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  roundImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: '#75AB38',
   },
   drawerItem: {
     paddingVertical: 15,

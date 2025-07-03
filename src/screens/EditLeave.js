@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, ActivityIndicator } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Provider, TextInput } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
 import { useRoute } from '@react-navigation/native';
+import AlertModal from '../components/CustomAlert';
 
 const statusOptions = ['pending', 'approved', 'rejected'];
 
@@ -14,7 +15,11 @@ export default function EditLeave() {
   const [LeaveFor, setLeaveFor] = useState('staff');
   const [users, setUsers] = useState([]);
   const [date, setDate] = useState(new Date());
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
   const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('pending');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -30,6 +35,8 @@ export default function EditLeave() {
       setUsers(response.data?.data || []);
     } catch (error) {
       console.log(error.message);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -39,6 +46,8 @@ export default function EditLeave() {
       setUsers(response.data?.data || []);
     } catch (error) {
       console.log(error.message);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -70,6 +79,7 @@ export default function EditLeave() {
   }, []);
 
   const handleSubmit = async () => {
+    setLoading(true);
     const db = await AsyncStorage.getItem('db_name');
     const payload = {
       reason: description,
@@ -83,15 +93,34 @@ export default function EditLeave() {
     try {
       const response = await axios.put(`${ApiUrl}/api/leave/single/${id}`, payload);
       console.log(response);
-      Alert.alert('Leave updated');
+       setModalType('success');
+        setModalMessage('Leave Updated Successfully');
+        setModalVisible(true);
     } catch (error) {
       console.log(error.message);
+        setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+    }finally{
+      setLoading(false);
     }
   };
-
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <Provider>
       <View style={styles.container}>
+         <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
         <Text style={styles.label}>Select Leave For</Text>
         <View style={styles.row}>
           <TouchableOpacity
@@ -251,6 +280,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginBottom: 10,
   },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
   dropdown: {
     backgroundColor: '#fff',
     borderColor: '#ccc',
@@ -269,6 +304,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginLeft: 10,
   },
+  
   saveBtn: { backgroundColor: '#75AB38' },
   saveText: { color: '#fff', fontWeight: '500' },
 });

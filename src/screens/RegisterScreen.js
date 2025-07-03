@@ -7,83 +7,194 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ScrollView,
+  View,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import { font } from '../components/ThemeStyle';
+import {font} from '../components/ThemeStyle'; // Make sure this is correctly defined
+import axios from 'axios';
+import { ApiUrl } from '../../config/services';
+import AlertModal from '../components/CustomAlert';
 
 export default function RegisterScreen() {
+  // const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
+    const [loading , setLoading] = useState(false)
+
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [businessName, setBusinessName] = useState('');
 
   const navigation = useNavigation();
 
-  const handleLogin = () => {
-    Alert.alert('Logged in');
+  const handleRegister = async() => {
+    if (password !== confirmPassword) {
+       setModalType('danger');
+        setModalMessage('Passwords do not match');
+        setModalVisible(true);
+      return;
+    }
+
+    try {
+      setLoading(true)
+      const payload = {
+        business_name : businessName,
+        email : email,
+        password : password,
+      }
+
+      const response = await axios.post(`${ApiUrl}/api/helper/register-first` , payload);
+
+      console.log(response);
+       setModalType('success');
+        setModalMessage('Business Registered Successfully Wait for Admin Approval');
+        setModalVisible(true);
+      setEmail('');
+      setPassword('');
+      setBusinessName('');
+      setConfirmPassword('');
+      
+    } catch (error) {
+      console.log(error.message)
+        setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+    }finally{
+      setLoading(false)
+    }
+  
   };
+
+  
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Text style={styles.title}>Welcome</Text>
-        <Text style={styles.subtitle}>Signup to Hotel Management System</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          placeholderTextColor="#aaa"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#aaa"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          placeholder="Password"
-          style={styles.input}
-          placeholderTextColor="#aaa"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
+             <Image
+                  source={require('../assets/profile-9.webp')}
+                  style={styles.logo}
+              />
+          <Text style={styles.title}>Welcome</Text>
+          <Text style={styles.subtitle}>
+            Signup to Hotel Management System
+          </Text>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.linkText}>Alreaddy have an account? Login</Text>
-        </TouchableOpacity>
+          <TextInput
+            placeholder="Business Name"
+            style={styles.input}
+            placeholderTextColor="#aaa"
+            value={businessName}
+            onChangeText={setBusinessName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#aaa"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={text => setEmail(text.toLowerCase())}
+          />
+          <TextInput
+            placeholder="Password"
+            style={styles.input}
+            placeholderTextColor="#aaa"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TextInput
+            placeholder="Confirm Password"
+            style={styles.input}
+            placeholderTextColor="#aaa"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+         
+         
+
+          <TouchableOpacity style={styles.button} onPress={handleRegister}>
+            <Text style={styles.buttonText}>Register</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.linkText}>
+              Already have an account? Login
+          </Text>
+          </TouchableOpacity>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
 export const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
+  },
   container: {
     flex: 1,
     padding: 24,
     backgroundColor: '#fff',
+  },  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
   },
   title: {
     fontSize: 25,
-    // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
     color: '#333',
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
-    fontFamily:font.primary,
+    fontFamily: font.primary,
     marginBottom: 20,
+    textAlign: 'center',
   },
+  logo: {
+  width: 120,
+  height: 120,
+  resizeMode: 'contain',
+  alignSelf: 'center',
+  marginBottom: 20,
+},
+
   input: {
     backgroundColor: '#fff',
     padding: 14,
@@ -93,7 +204,7 @@ export const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   button: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#75AB38',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -102,19 +213,13 @@ export const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    // fontWeight: 'bold',
-    fontFamily:font.secondary,
+    fontFamily: font.secondary,
     fontSize: 16,
   },
   linkText: {
     color: '#4f46e5',
     textAlign: 'center',
     marginTop: 10,
-    fontFamily:font.secondary,
-    // fontWeight: '600',
-  },
-    safeArea: {
-    flex: 1,
-    backgroundColor: '#F9F9F9',
+    fontFamily: font.secondary,
   },
 });

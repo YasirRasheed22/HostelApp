@@ -1,13 +1,19 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertModal from '../components/CustomAlert';
 
 export default function OrganizationProfile() {
   const [viewMode, setViewMode] = useState(true);
   const [id , setId] = useState();
   const [db , setDb] = useState();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
+    const [loading , setLoading] = useState(true)
+
 
   useEffect(()=>{
     const fetchSettings = async() => {
@@ -24,6 +30,8 @@ export default function OrganizationProfile() {
             setId(response.data?.settings?.id)
         } catch (error) {
             console.log(error.message)
+        }finally{
+          setLoading(false)
         }
     }
 
@@ -46,6 +54,7 @@ export default function OrganizationProfile() {
   };
 
   const handlePress = async () => {
+    setLoading(true)
     const payload = {
         organization_name: data.organization_name,
         organization_location: data.organization_location,
@@ -60,14 +69,34 @@ export default function OrganizationProfile() {
       console.log("Submitting payload:", payload);
       const response  = await axios.post(`${ApiUrl}/api/setting` , payload);
       console.log(response);
-      Alert.alert('Changes Submitted');
+      setModalType('success');
+        setModalMessage('Changes Submitted');
+        setModalVisible(true);
     } catch (error) {
       console.log(error.message);
+    }finally{
+      setLoading(false)
     }
+
   };
+
+  
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
       <Text style={styles.sectionTitle}>Organization Information</Text>
 
       <View style={styles.row}>
@@ -202,6 +231,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 10,
     color: '#555',
+  },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   btn: {
     marginBottom: 20,

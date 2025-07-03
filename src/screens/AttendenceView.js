@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native'
+import { View, Text, SafeAreaView, FlatList, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { font } from '../components/ThemeStyle';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -75,6 +75,7 @@ export default function AttendenceView() {
     const [users , setUser] = useState();
     const route = useRoute();
     const {id} = route.params;
+    const [loading, setLoading] = useState(true);
     console.log(id);
 
 
@@ -91,10 +92,19 @@ export default function AttendenceView() {
                 setUser(response?.data?.attendance)
             } catch (error) {
                 console.log(error.message);
+            }finally{
+              setLoading(false);
             }
         }
         fetchUser();
     },[])
+      if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <SafeAreaView style={styles.safeArea}>
          <View style={styles.container}>
@@ -142,6 +152,12 @@ export default function AttendenceView() {
        // fontWeight: 'bold',
        fontFamily: font.secondary,
      },
+       loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
      separator: {
        height: 1,
        backgroundColor: '#ccc',

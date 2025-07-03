@@ -1,10 +1,12 @@
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { font } from '../components/ThemeStyle';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+
 import { ApiUrl } from '../../config/services';
 import { useRoute } from '@react-navigation/native';
+import AlertModal from '../components/CustomAlert';
 
 export default function EditAsset() {
 
@@ -16,6 +18,10 @@ export default function EditAsset() {
     });
 
     const route = useRoute();
+    const [loading, setLoading] = useState(true);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
+    const [modalType, setModalType] = useState('danger');
     const { id } = route.params;
 
     console.log(id)
@@ -39,6 +45,8 @@ export default function EditAsset() {
                 });
             } catch (error) {
                 console.log('Error fetching asset:', error.message);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -47,6 +55,7 @@ export default function EditAsset() {
 
     const handleSave = async () => {
         // console.error(values)
+        setLoading(true);
         try {
             const db = await AsyncStorage.getItem('db_name');
             const payload = {
@@ -59,14 +68,35 @@ export default function EditAsset() {
             }
             console.log(payload)
             const response = await axios.put(`${ApiUrl}/api/inventory/update/${id}`, payload);
-            Alert.alert('Inventary Updated Successfully')
+            setModalType('success');
+            setModalMessage('Inventary Updated Successfully');
+            setModalVisible(true);
             console.log(response);
         } catch (error) {
             console.log(error.message)
+            setModalType('danger');
+            setModalMessage('Validation Error');
+            setModalVisible(true);
+        } finally {
+            setLoading(false);
         }
+    }
+
+    if (loading) {
+        return (
+            <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#75AB38" />
+            </View>
+        );
     }
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            <AlertModal
+                visible={modalVisible}
+                onDismiss={() => setModalVisible(false)}
+                message={modalMessage}
+                type={modalType}
+            />
 
             <Text style={styles.sectionTitle}>Asset Information</Text>
 
@@ -207,6 +237,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         // fontWeight: 'bold',
         fontFamily: font.secondary,
+    },
+    loaderContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F9F9F9',
     },
     title: {
         fontSize: 25,

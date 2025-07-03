@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, SafeAreaView, FlatList, Image, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, SafeAreaView, FlatList, Image, TouchableOpacity, ActivityIndicator, TouchableWithoutFeedback } from 'react-native'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { ApiUrl } from '../../config/services'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -51,6 +51,7 @@ const formatDate = (dateStr) => {
 
 
 const UserCard = ({user,onView}) => (
+  <TouchableWithoutFeedback onPress={() => onView(user)}>
   <View style={styles.card}>
     <View style={styles.row}>
      <View style={styles.sideBox}>
@@ -80,12 +81,14 @@ const UserCard = ({user,onView}) => (
       </TouchableOpacity> */}
     </View>
   </View>
+  </TouchableWithoutFeedback>
 );
 export default function AttendenceList() {
 
   const navigation = useNavigation();
   const [users , setUser] = useState([]);
   const route = useRoute();
+  const [loading, setLoading] = useState(true);
   const {data} = route.params;
   console.log(data);
 
@@ -109,9 +112,9 @@ useLayoutEffect(()=>{
       headerRight: () => {
         return (
           <View style={{flexDirection: 'row'}}>
-            <TouchableOpacity  style={styles.topIcon}>
+            {/* <TouchableOpacity  style={styles.topIcon}>
               <AntDesign name="retweet" size={22} color="#fff" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity
               onPress={() => navigation.navigate('MarkAttendence')}
               style={[styles.topIcon, {marginRight: 12}]}>
@@ -136,6 +139,8 @@ useLayoutEffect(()=>{
             setUser(response.data?.attendance);
         } catch (error) {
             console.log(error.message)
+        }finally{
+          setLoading(false);
         }
      };
      fetchAttendence();
@@ -151,6 +156,14 @@ useLayoutEffect(()=>{
         console.log(user);
         navigation.navigate('AttendenceView' ,{id: user.tenant_id})
     }
+
+      if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
    <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -240,7 +253,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   viewBtn: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#75AC38',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -298,6 +311,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     justifyContent: 'center',
+  },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   avatar: {
     width: 60,

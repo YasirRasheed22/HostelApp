@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {useRoute} from '@react-navigation/native';
@@ -15,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ApiUrl} from '../../config/services';
 import axios from 'axios';
 import {font} from '../components/ThemeStyle';
+import AlertModal from '../components/CustomAlert';
 
 const facilitiesList = [
   'AC',
@@ -34,7 +36,11 @@ export default function EditRoom() {
   const {id} = route.params;
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [checkAll, setCheckAll] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
   const [rooms, setRoom] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [otherFacility, setOtherFacility] = useState('');
 
@@ -51,6 +57,7 @@ export default function EditRoom() {
   };
 
   const handleSave = async () => {
+    setLoading(true);
     const db = await AsyncStorage.getItem('db_name');
 
     // Replace 'Others' with the user-provided value
@@ -80,10 +87,16 @@ export default function EditRoom() {
         payload,
       );
       console.log('Edit API response:', response.data);
-      Alert.alert('Room Updated Successfully');
+      setModalType('success');
+        setModalMessage('Room Updated Successfully');
+        setModalVisible(true);
     } catch (error) {
       console.log('Error while saving:', error.message);
-      Alert.alert('Something went wrong... try again');
+       setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -132,14 +145,30 @@ export default function EditRoom() {
         setCheckAll(facilities.length === facilitiesList.length);
       } catch (error) {
         console.log('Error fetching room:', error.message);
+      }finally{
+        setLoading(false);
       }
     };
 
     fetchRoom();
   }, [id]);
 
+    if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
       {/* <View style={styles.titleRow}>
         <Text style={styles.title}>Add Room</Text>
       </View>
@@ -244,6 +273,13 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
     flexGrow: 1,
+  },
+
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   sectionTitle: {
     fontSize: 18,

@@ -55,6 +55,9 @@ import EditExpense from './src/screens/EditExpense';
 import EditPayment from './src/screens/EditPayment';
 import EditFee from './src/screens/EditFee';
 import EditLeave from './src/screens/EditLeave';
+import Announcements from './src/screens/Announcements';
+import ForgetPassword from './src/screens/ForgetPassword';
+import Profile from './src/screens/Profile';
 // import Orientation from 'react-native-orientation-locker';
 
 const Stack = createNativeStackNavigator();
@@ -121,6 +124,9 @@ export default function App() {
         <Stack.Screen name="EditPayment" component={EditPayment}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen name="EditFee" component={EditFee}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen name="EditLeave" component={EditLeave}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="Announcements" component={Announcements}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="ForgetPassword" component={ForgetPassword}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
+        <Stack.Screen name="Profile" component={Profile}  options={{ headerShown: true , headerTitleStyle: {fontFamily: font.secondary,fontSize: 20} }}/>
         <Stack.Screen
           name="Dashboard"
           component={DashboardTabs}

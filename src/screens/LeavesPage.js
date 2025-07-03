@@ -21,7 +21,7 @@ import { ApiUrl } from '../../config/services';
 
 
 const UserCard = ({ user, toggleStatus, onEdit, onDelete }) => (
-  <View style={styles.userCard}>
+  <View style={styles.card2}>
     <View style={styles.row}>
       <View style={styles.sideBox}>
         <Image source={{ uri: user?.user?.profile_image || user?.tenant?.profile_image }} style={styles.avatar} />
@@ -58,6 +58,9 @@ export default function LeavePage() {
   const navigation = useNavigation();
   const [counter , setCount] = useState();
   const [users , setUsers] = useState();
+  
+    const [loading , setLoading] = useState(true)
+
 
   const isFocussed = useIsFocused();
 
@@ -80,6 +83,8 @@ export default function LeavePage() {
          setUsers(response.data?.leaves);
       } catch (error) {
         console.log(error.message)
+      }finally{
+        setLoading(false);
       }
     }
 
@@ -234,123 +239,136 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 24,
+    paddingBottom: 40,
   },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 25,
+    fontFamily: font.secondary,
+    color: '#333',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: font.secondary,
+    color: '#4E4E5F',
+    marginBottom: 12,
+  },
+
+  // Summary Cards
   cardList: {
-    marginTop: 10,
-    display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
   card: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
     width: '48%',
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
   },
   iconWrapper: {
-    width: '30%',
+    width: 35,
+    height: 35,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#75AB38',
+    marginRight: 12,
+  },
+  icons: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   textWrapper: {
-    width: '70%',
+    flex: 1,
   },
   cardTitle: {
+    fontSize: 14,
     color: '#7CB33D',
-    fontSize: 13,
     fontFamily: font.secondary,
   },
   cardCount: {
-    color: '#7CB33D',
     fontSize: 13,
     fontFamily: font.secondary,
+    color: '#7CB33D',
     marginTop: 4,
   },
-  icons: {
-    width: 25,
-    height: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-    backgroundColor: '#75AB38',
+
+  // Report List Card
+  container2: {
+    marginTop: 20,
   },
-  userCard: {
+  card2: {
     backgroundColor: '#fff',
     padding: 16,
+    marginHorizontal: 4,
     marginBottom: 12,
-    borderRadius: 10,
-    elevation: 3,
-  },
-  row: {
+    borderRadius: 12,
     flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  sideBox: {
-    width: '30%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   infoBox: {
-    width: '70%',
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#ccc',
+    flex: 1,
+    paddingRight: 8,
   },
   name: {
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: font.secondary,
+    color: '#333',
     marginBottom: 6,
   },
-  status: {
-    marginTop: 6,
-    fontFamily: font.secondary,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  active: {
-    backgroundColor: '#d4edda',
-    color: '#155724',
-  },
-  inactive: {
-    backgroundColor: '#f8d7da',
-    color: '#721c24',
-  },
+
+  // Buttons
   buttonContainer: {
     flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginLeft: 8,
   },
   viewBtn: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 6,
-    marginRight: 10,
-  },
-  editBtn: {
-    backgroundColor: 'gray',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    marginRight: 8,
   },
   deleteBtn: {
     backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 6,
-    marginLeft: 10,
   },
   btnText: {
     color: 'white',
     fontFamily: font.secondary,
+    fontSize: 14,
   },
 });

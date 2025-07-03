@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, FlatList, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, FlatList, TouchableOpacity, Alert, ActivityIndicator, TouchableWithoutFeedback } from 'react-native'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios from 'axios'
@@ -7,20 +7,27 @@ import { font } from '../components/ThemeStyle'
 import { useIsFocused, useNavigation } from '@react-navigation/native'
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
-
+function formatToPakistaniCurrency(amount) {
+  return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR',
+      minimumFractionDigits: 0
+  }).format(amount);
+}
 const UserCard = ({ user, onEdit, onView, onDelete }) => (
+  <TouchableWithoutFeedback onPress={() => onView(user)} >
   <View style={styles.card}>
     <View style={styles.row}>
 
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user?.title}</Text>
-        <Text>Price: {user?.price}</Text>
+        <Text>Price: {formatToPakistaniCurrency(user?.price)}</Text>
         <Text>Expense Made By: {user?.user?.fullName}</Text>
         <Text>Expense Date: {user?.date_for}</Text>
         <Text>Payment Mode: {user?.payment_type}</Text>
       </View>
     </View>
-    <View style={styles.buttonContainer}>
+    {/* <View style={styles.buttonContainer}>
       <TouchableOpacity onPress={() => onView(user)} style={styles.viewBtn}>
         <Text style={styles.btnText}>View</Text>
       </TouchableOpacity>
@@ -32,14 +39,16 @@ const UserCard = ({ user, onEdit, onView, onDelete }) => (
         style={styles.deleteBtn}>
         <Text style={styles.btnText}>Delete</Text>
       </TouchableOpacity>
-    </View>
+    </View> */}
   </View>
+  </TouchableWithoutFeedback>
 );
 
 
 export default function Expenses() {
   const navigation = useNavigation();
   const [users, setUser] = useState();
+  const [loading, setLoading] = useState(true);
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: 'Expenses',
@@ -47,9 +56,9 @@ export default function Expenses() {
       headerRight: () => {
         return (
           <View style={{ flexDirection: 'row' }}>
-            <TouchableOpacity style={styles.topIcon}>
+            {/* <TouchableOpacity style={styles.topIcon}>
               <AntDesign name="retweet" size={22} color="#fff" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity
               onPress={() => navigation.navigate('AddExpense')}
               style={[styles.topIcon, { marginRight: 12 }]}>
@@ -77,6 +86,8 @@ export default function Expenses() {
       setUser(response.data.data);
     } catch (error) {
       console.log(error.message);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -123,6 +134,13 @@ export default function Expenses() {
     console.log(id)
     navigation.navigate('EditExpense', { id: id.id });
   }
+    if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -163,52 +181,98 @@ export default function Expenses() {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F9F9F9',
+  },
+container: {
+  flex: 1,
+  paddingVertical: 20,
+  paddingHorizontal: 12, // reduced padding for better layout with shadow
+  backgroundColor: '#F9F9F9',
+},
+
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
+ card: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  padding: 16,
+  marginBottom: 16,
+  marginHorizontal: 8, // Add horizontal margin to prevent cut-off shadows
+  elevation: 5, // For Android shadow
+  shadowColor: '#000', // iOS shadow
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.15,
+  shadowRadius: 6,
+},
+
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  infoBox: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 18,
+    fontFamily: font.secondary,
+    color: '#333',
+    marginBottom: 6,
+  },
+  status: {
+    marginTop: 10,
+    fontFamily: font.secondary,
+    fontSize: 13,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  active: {
+    backgroundColor: '#d4edda',
+    color: '#155724',
+  },
+  inactive: {
+    backgroundColor: '#f8d7da',
+    color: '#721c24',
+  },
+  topIcon: {
+    paddingVertical: 6,
+    paddingHorizontal: 15,
+    backgroundColor: '#75AB38',
+    borderRadius: 10,
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ccc',
+  },
   title: {
     fontSize: 25,
-    marginBottom: 10,
-    // fontWeight: 'bold',
     fontFamily: font.secondary,
+    marginBottom: 10,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   separator: {
     height: 1,
     backgroundColor: '#ccc',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  container: {
-    padding: 24,
-    // backgroundColor: '#f2f2f2',
-    flex: 1,
-  },
-  card: {
-    backgroundColor: '#fff',
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 10,
-    elevation: 3,
-  },
-  row: {
-    // flexDirection: 'row',
-    // alignItems: 'flex-start',
-  },
-  sideBox: {
-    width: '30%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoBox: {
-    width: '100%',
-  },
-  name: {
-    fontSize: 18,
-    // fontWeight: 'bold',
-    fontFamily: font.secondary,
-    marginBottom: 6,
+    marginVertical: 10,
   },
   buttonContainer: {
     flexDirection: 'row',
-    marginTop: 10,
     justifyContent: 'flex-end',
+    marginTop: 10,
   },
   viewBtn: {
     backgroundColor: '#4CAF50',
@@ -222,58 +286,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
-    marginLeft: 10,
   },
   EditBtn: {
     backgroundColor: 'gray',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
+    marginRight: 10,
   },
   btnText: {
     color: 'white',
-    // fontWeight: 'bold',
     fontFamily: font.secondary,
-  },
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#F9F9F9',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  status: {
-    marginTop: 6,
-    // fontWeight: 'bold',
-    fontFamily: font.secondary,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  active: {
-    backgroundColor: '#d4edda',
-    color: '#155724',
-  },
-  inactive: {
-    backgroundColor: '#f8d7da',
-    color: '#721c24',
-  },
-  topIcon: {
-    marginLeft: 10,
-    backgroundColor: '#75AB38',
-    borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#ccc',
   },
 });

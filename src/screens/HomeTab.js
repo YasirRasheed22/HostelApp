@@ -9,6 +9,7 @@ import {
   Dimensions,
   Animated,
   Easing,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -28,6 +29,7 @@ export default function HomeTab() {
 
   const [counter, setCounter] = useState();
   const [counter1, setCounter1] = useState();
+  const [loading , setLoading] = useState(true)
   const [allowedTabs, setAllowedTabs] = useState([]);
   const [WeeklyExpenses, setWeeklyExpenses] = useState({ labels: [], datasets: [] });
   const [WeeklyFees, setWeeklyFee] = useState({ labels: [], datasets: [] });
@@ -46,12 +48,15 @@ export default function HomeTab() {
     };
 
     const fetchRecord = async () => {
+
       const db = await AsyncStorage.getItem('db_name');
       try {
         const response = await axios.put(`${ApiUrl}/api/attendance/dashboard`, { db_name: db });
         setCounter1(response.data);
       } catch (error) {
         console.log(error.message);
+      }finally{
+        setLoading(false)
       }
     };
 
@@ -63,6 +68,8 @@ export default function HomeTab() {
         setCounter(response.data?.array);
       } catch (error) {
         console.log(error.message);
+      }finally{
+        setLoading(false)
       }
     };
 
@@ -70,12 +77,15 @@ export default function HomeTab() {
       try {
         const db = await AsyncStorage.getItem('db_name');
         const response = await axios.put(`${ApiUrl}/api/report/dashboard/expense/graph`, { db_name: db });
+        console.log(response)
         setWeeklyExpenses({
           labels: response.data?.data?.weeks,
           datasets: [{ data: response.data?.data?.expenses }],
         });
       } catch (error) {
         console.log(error);
+      }finally{
+        setLoading(false)
       }
     };
 
@@ -91,6 +101,8 @@ export default function HomeTab() {
       } catch (error) {
         console.error('Failed to load privileges:', error);
         setAllowedTabs(null); // Fail-safe: show all
+      }finally{
+        setLoading(false)
       }
     }
 
@@ -104,6 +116,8 @@ export default function HomeTab() {
         });
       } catch (error) {
         console.log(error);
+      }finally{
+        setLoading(false)
       }
     };
 
@@ -116,14 +130,14 @@ export default function HomeTab() {
   }, [isFocussed]);
 
   const stats = [
-    { label: 'Active Tenants',  key: 'tenants', count: counter?.activeTenants, icon: 'file-text-o', comp: 'ActiveMember' },
-    { label: 'Inactive Tenants', key: 'tenants', count: counter?.tenants - counter?.activeTenants, icon: 'check-square-o', comp: 'InactiveMember' },
-    { label: 'Rooms',  key: 'rooms',count: counter?.rooms, icon: 'exchange', comp: 'Rooms' },
-    { label: 'Staff Members', key:'staff', count: counter?.user, icon: 'exchange', comp: 'StaffMember' },
-    { label: 'Receivable Amount',key:'accounts', count: counter?.receivedAmount, icon: 'exchange' },
-    { label: 'Received Amount' ,key:'accounts', count: counter?.receiveableAmount, icon: 'exchange' },
-    { label: 'Vacant Rooms', key: 'rooms', count: counter?.vacantRooms, icon: 'exchange' },
-    { label: 'Filled Rooms', key: 'rooms', count: counter?.filledRooms, icon: 'exchange' },
+    { label: 'Active Tenants',  key: 'tenants', count: counter?.activeTenants || 0, icon: 'file-text-o', comp: 'ActiveMember' },
+    { label: 'Inactive Tenants', key: 'tenants', count: counter?.tenants - counter?.activeTenants || 0, icon: 'check-square-o', comp: 'InactiveMember' },
+    { label: 'Rooms',  key: 'rooms',count: counter?.rooms || 0, icon: 'exchange', comp: 'Rooms' },
+    { label: 'Staff Members', key:'staff', count: counter?.user || 0, icon: 'exchange', comp: 'StaffMember' },
+    { label: 'Receivable Amount',key:'accounts', count: counter?.receivedAmount || 0, icon: 'exchange' },
+    { label: 'Received Amount' ,key:'accounts', count: counter?.receiveableAmount || 0, icon: 'exchange' },
+    { label: 'Vacant Rooms', key: 'rooms', count: counter?.vacantRooms || 0, icon: 'exchange' },
+    { label: 'Filled Rooms', key: 'rooms', count: counter?.filledRooms || 0, icon: 'exchange' },
   ];
 
   const filteredStats = stats.filter((item) => {
@@ -133,9 +147,17 @@ export default function HomeTab() {
 });
 
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
+
   const attendance = [
-    { label: 'In', count: counter1?.presentCount, comp: 'Attendance' },
-    { label: 'Out', count: counter1?.absentCount, comp: 'Attendance' },
+    { label: 'In', count: counter1?.presentCount || 0, comp: 'Attendance' },
+    { label: 'Out', count: counter1?.absentCount || 0, comp: 'Attendance' },
   ];
 
   const ReceivedAmount = [
@@ -191,15 +213,15 @@ export default function HomeTab() {
                 style={[styles.card, styles.horizontalCard]}
                 onPress={() => {
                   if (item.label === 'Rooms') {
-                    navigation.navigate('Rooms', { data: 'AllRoom' });
+                    navigation.navigate('Rooms', { data: 'All Rooms' });
                   } else if (item.label === 'Vacant Rooms') {
-                    navigation.navigate('Rooms', { data: 'VacantRoom' });
+                    navigation.navigate('Rooms', { data: 'Vacant Rooms' });
                   } else if (item.label === 'Filled Rooms') {
-                    navigation.navigate('Rooms', { data: 'FilledRoom' });
+                    navigation.navigate('Rooms', { data: 'Filled Rooms' });
                   } else if (item.label === 'Received Amount') {
-                    navigation.navigate('Payments', { data: ReceivedAmount });
+                    navigation.navigate('Payments', { data: 'Received Amounts' });
                   } else if (item.label === 'Receivable Amount') {
-                    navigation.navigate('Payments', { data: ReceivableAmount });
+                    navigation.navigate('Payments', { data: 'Receivable Amounts' });
                   } else if (item.comp) {
                     navigation.navigate(item.comp);
                   }
@@ -240,7 +262,7 @@ export default function HomeTab() {
 
      {(!allowedTabs || allowedTabs.accounts) && (
   <>
-          {WeeklyExpenses.datasets.length > 0 && (
+          {WeeklyExpenses?.datasets.length > 0 && (
             <>
               <Text style={styles.sectionTitle}>Charts</Text>
               <Text style={{ textAlign: 'center', marginTop: 20 }}>Weekly Expenses</Text>
@@ -323,4 +345,10 @@ const styles = StyleSheet.create({
   horizontalScroll: { marginTop: 10 },
   horizontalCard: { width: 200, marginRight: 12 },
   chart: { padding: 10, backgroundColor: '#fff', marginTop: 10, borderRadius: 10 },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
 });

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
@@ -8,6 +8,8 @@ import { useRoute } from '@react-navigation/native';
 const FeeInvoiceScreen = () => {
   const route = useRoute();
   const { id } = route.params;
+      const [loading, setLoading] = useState(true);
+
   const [fee, setFee] = useState(null);
 
   useEffect(() => {
@@ -25,6 +27,9 @@ const FeeInvoiceScreen = () => {
         setFee(response.data.data);
       } catch (error) {
         console.log('Error:', error.message);
+      }finally{
+        setLoading(false)
+
       }
     };
 
@@ -44,7 +49,13 @@ const FeeInvoiceScreen = () => {
   ];
 
   const total = fees.reduce((acc, item) => acc + item.amount, 0);
-
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
       <Text style={styles.title}>Fee Invoice</Text>
@@ -118,6 +129,12 @@ const styles = StyleSheet.create({
   table: {
     borderWidth: 1,
     borderColor: '#000',
+  },
+     loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   row: {
     flexDirection: 'row',

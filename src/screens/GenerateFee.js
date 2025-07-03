@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     Pressable,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -15,12 +16,18 @@ import { font } from '../components/ThemeStyle';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
+import AlertModal from '../components/CustomAlert';
 
 export default function GenerateFee() {
 
     const navigation = useNavigation();
     const [showStartDropdown, setShowStartDropdown] = useState();
     const [startDate, setStartDate] = useState()
+        const [loading, setLoading] = useState(false);
+        const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
+
     const [showEndDropdown, setShowEndDropdown] = useState();
     const [endDate, setEndDate] = useState()
 
@@ -33,6 +40,8 @@ export default function GenerateFee() {
 
 
     const handleSubmit = async() => {
+                    setLoading(true)
+
         const db = await AsyncStorage.getItem('db_name');
         const payload = {
             db_name: db,
@@ -42,9 +51,24 @@ export default function GenerateFee() {
         try {
             const response = await axios.post(`${ApiUrl}/api/fees` , payload);
             console.log(response);
-            Alert.alert('Report Generated')
+            setModalType('success');
+        setModalMessage('Report Generated');
+        setModalVisible(true);
         } catch (error) {
-            console.log(error.message)
+
+           if(error.status === 400)
+           {
+                setModalType('danger');
+        setModalMessage('No Danger');
+        setModalVisible(true);
+           }else{
+              setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+           }
+        }finally{
+                        setLoading(false)
+
         }
     }
 
@@ -52,19 +76,33 @@ export default function GenerateFee() {
         navigation.setOptions({
             headerTitle: 'Fee List',
             headerTitleStyle: { fontSize: 15, fontFamily: font.secondary },
-            headerRight: () => (
-                <TouchableOpacity onPress={handlePress}>
-                    <AntDesign name="addfile" size={28} color="#4E4E5F" />
-                </TouchableOpacity>
-            ),
+            // headerRight: () => (
+            //     <TouchableOpacity onPress={handlePress}>
+            //         <AntDesign name="addfile" size={28} color="#4E4E5F" />
+            //     </TouchableOpacity>
+            // ),
         });
     }, [navigation]);
     const today = new Date();
     const handlePress = () => {
         navigation.navigate('GenerateFee');
     };
+    
+      if (loading) {
+        return (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#75AB38" />
+          </View>
+        );
+      }
     return (
         <SafeAreaView style={styles.safeArea}>
+             <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={{ display: 'flex' , marginTop:25, flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Pressable onPress={() => setShowStartDropdown(!showStartDropdown) && setShowEndDropdown(false)} style={styles.input}>
@@ -148,6 +186,12 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         gap: 10,
     },
+      loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
     card: {
         flexDirection: 'row',
         backgroundColor: '#FFFFFF',

@@ -6,6 +6,7 @@ import {
   ScrollView,
   Alert,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {font} from '../components/ThemeStyle';
@@ -16,6 +17,7 @@ import axios from 'axios';
 import {ApiUrl} from '../../config/services';
 import {useRoute, useIsFocused} from '@react-navigation/native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import AlertModal from '../components/CustomAlert';
 
 export default function EditExpense() {
   const route = useRoute();
@@ -23,7 +25,11 @@ export default function EditExpense() {
 
   const [db, setDb] = useState('');
   const [staff, setStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger'); 
   const [existingFile, setExistingFile] = useState(null);
   const isFocused = useIsFocused();
 
@@ -103,6 +109,8 @@ export default function EditExpense() {
         setStaff(staffRes.data?.data || []);
       } catch (err) {
         console.log('Load error:', err.message);
+      }finally{
+        setLoading(false);
       }
     };
 
@@ -112,6 +120,7 @@ export default function EditExpense() {
   }, [id, isFocused]);
 
   const handleUpdate = async () => {
+    setLoading(true);
     const formData = new FormData();
     formData.append('title', values.title);
     formData.append('price', values.expensePrice);
@@ -137,16 +146,35 @@ if (file) {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      Alert.alert('Success', 'Expense updated successfully');
+       setModalType('success');
+        setModalMessage('Expense Updated Successfully');
+        setModalVisible(true);
       console.log(response);
     } catch (error) {
       console.error('Update error:', error.message);
+        setModalType('danger');
+        setModalMessage('Validation Error');
+        setModalVisible(true);
+    }finally{
+      setLoading(false);
     }
   };
-
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.sectionTitle}>Edit Expense</Text>
+       <AlertModal
+  visible={modalVisible}
+  onDismiss={() => setModalVisible(false)}
+  message={modalMessage}
+  type={modalType}
+/>
 
       <TextInput
         placeholder="TITLE"
@@ -289,4 +317,10 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 18, fontFamily: font.secondary, marginBottom: 10 },
   modalItem: { paddingVertical: 12, borderBottomColor: '#eee', borderBottomWidth: 1 },
   modalItemText: { fontSize: 16, fontFamily: font.primary },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
 });

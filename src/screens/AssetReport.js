@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import React, { useEffect, useState } from 'react';
@@ -20,6 +21,7 @@ import { font } from '../components/ThemeStyle';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertModal from '../components/CustomAlert';
 
 const formatDisplayDate = (reportDate) => {
   if (!reportDate) return '';
@@ -46,7 +48,7 @@ const ReportCard = ({ user, onView, onDelete }) => (
         </Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => onDelete(user.id)} style={styles.deleteBtn}>
-        <Text style={styles.btnText}>Delete</Text>
+        <AntDesign name='delete' />
       </TouchableOpacity>
     </View>
   </View>
@@ -55,26 +57,33 @@ const ReportCard = ({ user, onView, onDelete }) => (
 export default function AssetReport() {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalType, setModalType] = useState('danger');
+  const [loading, setLoading] = useState(true);
+
   const [reportList, setReportList] = useState([]);
- 
+
   useEffect(() => {
-  
+
 
     fetchReports();
   }, [isFocused]);
 
-    const fetchReports = async () => {
-      const db = await AsyncStorage.getItem('db_name');
-      try {
-        const res = await axios.put(`${ApiUrl}/api/report`, { db_name: db });
-        const reports = res.data?.data || [];
+  const fetchReports = async () => {
+    setLoading(true)
+    const db = await AsyncStorage.getItem('db_name');
+    try {
+      const res = await axios.put(`${ApiUrl}/api/report`, { db_name: db });
+      const reports = res.data?.data || [];
 
-        setReportList(reports.filter(r => r.reportType === 'Assets Report'));
-        
-      } catch (error) {
-        console.log('Fetch Error:', error.message);
-      }
-    };
+      setReportList(reports.filter(r => r.reportType === 'Assets Report'));
+      setLoading(false);
+
+    } catch (error) {
+      console.log('Fetch Error:', error.message);
+    }
+  };
 
   const requestStoragePermission = async () => {
     if (Platform.OS !== 'android') return true;
@@ -92,30 +101,30 @@ export default function AssetReport() {
   };
 
   const downloadFile = async (fileUrl) => {
-  //   const hasPermission = await requestStoragePermission();
-  //   if (!hasPermission) {
-  //     Alert.alert('Permission Denied', 'Cannot download file without permission');
-  //     return;
-  //   }
+    //   const hasPermission = await requestStoragePermission();
+    //   if (!hasPermission) {
+    //     Alert.alert('Permission Denied', 'Cannot download file without permission');
+    //     return;
+    //   }
 
-  //   const fileName = fileUrl.split('/').pop();
-  //   const downloadPath = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+    //   const fileName = fileUrl.split('/').pop();
+    //   const downloadPath = `${RNFS.DownloadDirectoryPath}/${fileName}`;
 
-  //   try {
-  //     const result = await RNFS.downloadFile({
-  //       fromUrl: fileUrl,
-  //       toFile: downloadPath,
-  //     }).promise;
+    //   try {
+    //     const result = await RNFS.downloadFile({
+    //       fromUrl: fileUrl,
+    //       toFile: downloadPath,
+    //     }).promise;
 
-  //     if (result.statusCode === 200) {
-  //       Alert.alert('Success', `File downloaded to: Downloads folder`);
-  //     } else {
-  //       Alert.alert('Error', 'Download failed');
-  //     }
-  //   } catch (err) {
-  //     console.error('Download Error:', err.message);
-  //     Alert.alert('Error', 'Something went wrong while downloading');
-  //   }
+    //     if (result.statusCode === 200) {
+    //       Alert.alert('Success', `File downloaded to: Downloads folder`);
+    //     } else {
+    //       Alert.alert('Error', 'Download failed');
+    //     }
+    //   } catch (err) {
+    //     console.error('Download Error:', err.message);
+    //     Alert.alert('Error', 'Something went wrong while downloading');
+    //   }
     Linking.openURL(fileUrl)
   };
 
@@ -123,12 +132,14 @@ export default function AssetReport() {
     if (report?.fileUrl) {
       downloadFile(report.fileUrl);
     } else {
-      Alert.alert('Error', 'File URL is missing');
+      setModalType('danger');
+      setModalMessage('Url is missing');
+      setModalVisible(true);
     }
 
   };
 
- const handleDelete = id => {
+  const handleDelete = id => {
     console.log('Delete:', id);
     Alert.alert(
       'Confirm Deletion',
@@ -145,7 +156,7 @@ export default function AssetReport() {
             try {
               const db = await AsyncStorage.getItem('db_name');
               await axios.delete(`${ApiUrl}/api/report/${id}`, {
-                data: {db_name: db},
+                data: { db_name: db },
               });
               console.log('Report deleted successfully');
               fetchReports();
@@ -156,16 +167,30 @@ export default function AssetReport() {
           },
         },
       ],
-      {cancelable: true},
+      { cancelable: true },
     );
   };
 
 
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-       
+        <AlertModal
+          visible={modalVisible}
+          onDismiss={() => setModalVisible(false)}
+          message={modalMessage}
+          type={modalType}
+        />
+
         <View style={styles.container2}>
           {/* <Text style={styles.sectionTitle}>Generated Reports</Text> */}
           <FlatList
@@ -279,9 +304,10 @@ const styles = StyleSheet.create({
   },
   deleteBtn: {
     backgroundColor: '#f44336',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 19,
     borderRadius: 6,
+    marginRight: 10,
   },
   btnText: {
     color: 'white',
@@ -289,5 +315,11 @@ const styles = StyleSheet.create({
   },
   container2: {
     marginTop: 20,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
 });

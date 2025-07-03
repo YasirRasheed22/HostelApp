@@ -1,20 +1,81 @@
-import {View, Text, ScrollView, StyleSheet, Image} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import {useRoute} from '@react-navigation/native';
+import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, TouchableOpacity, Alert, Linking } from 'react-native';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
-import {ApiUrl} from '../../config/services';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { ApiUrl } from '../../config/services';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function StaffView() {
   const route = useRoute();
-  const {id} = route.params;
+  const { id } = route.params;
+  const navigation = useNavigation()
+    const [loading , setLoading] = useState(true)
+
   const [user, setUser] = useState();
   const [rights, setRights] = useState({});
 
   console.log(id);
 
-   
+ useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            onPress={handleEdit}
+            style={[styles.buttonContainer, styles.editButton]}>
+            <Text style={styles.buttonText}><FontAwesome name='pencil' /></Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleDelete}
+            style={[styles.buttonContainer, styles.deleteButton]}>
+            <Text style={styles.buttonText}><AntDesign name='delete' /></Text>
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [navigation])
 
+  const handleDelete = async() => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this item?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true)
+              const db = await AsyncStorage.getItem('db_name');
+              await axios.delete(`${ApiUrl}/api/users/${id}`, {
+                data: {db_name: db},
+              });
+              console.log('Staff deleted successfully');
+              navigation.goBack()
+              // Optional: refresh list or show success toast
+            } catch (error) {
+              console.error( error.message);
+              Alert.alert('Error', 'Failed to delete Member.');
+            }finally{
+              setLoading(false)
+            }
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+  const handleEdit = () => {
+    console.log('Edit:', id);
+    navigation.navigate('EditStaff', {id:id})
+  };
+  const isFocused = useIsFocused()
   useEffect(() => {
     const fetchstaff = async () => {
       const db = await AsyncStorage.getItem('db_name');
@@ -27,23 +88,36 @@ export default function StaffView() {
           payload,
         );
         console.log(response.data);
-       const rights = response.data?.users?.rights; // ✅ already an object
+        const rights = response.data?.users?.rights; // ✅ already an object
         // console.log(rights);
         setRights(rights);
         setUser(response.data?.users);
       } catch (error) {
         console.log(error.message);
+      }finally{
+        setLoading(false)
       }
     };
 
     fetchstaff();
-  }, [id]);
+  }, [id , isFocused]);
+
+  
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
+
+  
 
   return (
     <ScrollView style={styles.container}>
 
       <View style={styles.imageContainer}>
-        <Image source={{uri: user?.profile_image}} style={styles.roundImage} />
+        <Image source={{ uri: user?.profile_image }} style={styles.roundImage} />
       </View>
       <Text style={styles.sectionTitle}>Personal Information</Text>
       <View style={styles.card}>
@@ -61,7 +135,7 @@ export default function StaffView() {
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Phone</Text>
-          <Text style={styles.value}>{user?.phone}</Text>
+          <Text onPress={()=>{Linking.openURL(`tel:${user?.phone}`)}} style={[styles.value , {color: 'blue'}]}>{user?.phone}</Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.label}>Emergency Contact</Text>
@@ -76,15 +150,24 @@ export default function StaffView() {
           <Text style={styles.value}>{user?.payout_date}</Text>
         </View>
       </View>
-       <Text style={styles.sectionTitle}>Rights Information</Text>
+      <Text style={styles.sectionTitle}>Rights Information</Text>
       <View style={styles.card}>
-       <View style={{ marginTop: 20 }}>
+        <View style={{ marginTop: 20 }}>
           <Text style={{ fontWeight: 'bold', marginBottom: 10 }}>Access Rights:</Text>
-          {rights && Object.entries(rights).map(([key, value]) => (
-            <Text key={key}>
-              {key.charAt(0).toUpperCase() + key.slice(1)}: {value ? 'True' : 'False'}
-            </Text>
-          ))}
+          <View style={styles.rightsContainer}>
+            {rights &&
+              Object.entries(rights).map(([key, value]) => (
+                <View key={key} style={styles.rightsRow}>
+                  <Text style={styles.rightLabel}>
+                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Text>
+                  <Text style={[styles.rightStatus, { color: value ? 'green' : 'red' }]}>
+                    {value ? 'Enabled ✅' : 'Disabled ❌'}
+                  </Text>
+                </View>
+              ))}
+          </View>
+
         </View>
       </View>
 
@@ -109,10 +192,38 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     elevation: 2,
   },
+   buttonContainer: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  }, headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginRight: 10,
+  },
+  editButton: {
+    backgroundColor: '#4CAF50', // Green
+  },
+  deleteButton: {
+    backgroundColor: '#F44336', // Red
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
+  },
+    loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
   },
   label: {
     fontWeight: 'bold',
@@ -128,8 +239,26 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#75AB38',
   },
-    imageContainer: {
+  imageContainer: {
     alignItems: 'center',
     marginBottom: 20,
   },
+  rightsContainer: {
+    marginTop: 10,
+  },
+  rightsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
+  },
+  rightLabel: {
+    fontWeight: '500',
+    color: '#444',
+  },
+  rightStatus: {
+    fontWeight: '600',
+  },
+
 });

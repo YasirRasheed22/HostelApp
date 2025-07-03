@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, SafeAreaView, FlatList, Image, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, SafeAreaView, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { ApiUrl } from '../../config/services'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -8,6 +8,7 @@ import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native'
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
 
+
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
 
@@ -15,7 +16,13 @@ const formatDate = (dateStr) => {
   const options = { day: '2-digit', month: 'short', year: 'numeric' };
   return date.toLocaleDateString('en-GB', options); // e.g., "25 Jun 2025"
 };
-
+function formatToPakistaniCurrency(amount) {
+  return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR',
+      minimumFractionDigits: 0
+  }).format(amount);
+}
 
 const UserCard = ({user, onEdit, onView, onDelete}) => (
   <View style={styles.card}>
@@ -23,7 +30,7 @@ const UserCard = ({user, onEdit, onView, onDelete}) => (
     
       <View style={styles.infoBox}>
         <Text style={styles.name}>{user?.title}</Text>
-        <Text>Price: {user?.price}</Text>
+        <Text>Price: {formatToPakistaniCurrency(user?.price)}</Text>
         <Text>Implement Date: {formatDate(user?.updatedAt)}</Text>
         <Text>Status: {user?.status}</Text>
       </View>
@@ -45,6 +52,8 @@ const UserCard = ({user, onEdit, onView, onDelete}) => (
 export default function PerkList() {
  const navigation = useNavigation();
   const [users , setUser] = useState([]);
+    const [loading , setLoading] = useState(true)
+
 useLayoutEffect(()=>{
        navigation.setOptions({
       headerTitle: 'Perk List',
@@ -82,6 +91,8 @@ useLayoutEffect(()=>{
             setUser(response.data?.perk);
         } catch (error) {
             console.log(error.message)
+        }finally{
+          setLoading(false)
         }
      };
 
@@ -103,6 +114,7 @@ useLayoutEffect(()=>{
           style: 'destructive',
           onPress: async () => {
             try {
+              setLoading(true)
               const db = await AsyncStorage.getItem('db_name');
               await axios.delete(`${ApiUrl}/api/fees/perks/single/${user}`, {
                 data: {db_name: db},
@@ -114,6 +126,8 @@ useLayoutEffect(()=>{
             } catch (error) {
               console.error('Error deleting Perk:', error.message);
               Alert.alert('Error', 'Failed to delete the Perk.');
+            }finally{
+              setLoading(false)
             }
           },
         },
@@ -121,6 +135,15 @@ useLayoutEffect(()=>{
       {cancelable: true},
     );
   };
+
+  
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#75AB38" />
+      </View>
+    );
+  }
   
     
   return (
@@ -217,6 +240,12 @@ useLayoutEffect(()=>{
         borderRadius: 6,
         marginRight: 10,
       },
+        loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9F9F9',
+  },
       deleteBtn: {
         backgroundColor: '#f44336',
         paddingVertical: 8,

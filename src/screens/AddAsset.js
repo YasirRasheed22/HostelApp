@@ -1,9 +1,10 @@
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import React, { useState } from 'react'
 import { font } from '../components/ThemeStyle';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ApiUrl } from '../../config/services';
+import AlertModal from '../components/CustomAlert';
 
 export default function AddAsset() {
 
@@ -15,29 +16,54 @@ export default function AddAsset() {
     });
 
 
+    const [loading, setLoading] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalType, setModalType] = useState('danger'); // or 'success'
+    const [modalMessage, setModalMessage] = useState('');
 
-    const handleSave = async() => {
-        // console.error(values)
+    const handleSave = async () => {
+        setLoading(true);
         try {
             const db = await AsyncStorage.getItem('db_name');
             const payload = {
-                db_name : db,
+                db_name: db,
                 costPrice: '',
                 description: values.descritpion,
                 quantity: values.qty,
                 sellPrice: values.price,
                 title: values.title,
             }
-                console.log(payload)
-            const response = await axios.post(`${ApiUrl}/api/inventory` , payload);
-            Alert.alert('Inventary created Successfully')
+            console.log(payload)
+            const response = await axios.post(`${ApiUrl}/api/inventory`, payload);
+            setLoading(false);
+            setModalType('success');
+            setModalMessage('Inventary created Successfully');
+            setModalVisible(true);
             console.log(response);
         } catch (error) {
             console.log(error.message)
+            setModalType('danger');
+            setModalMessage('Validation Error');
+            setModalVisible(true);
+        } finally {
+            setLoading(false)
         }
+    }
+    if (loading) {
+        return (
+            <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#75AB38" />
+            </View>
+        );
     }
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            <AlertModal
+                visible={modalVisible}
+                onDismiss={() => setModalVisible(false)}
+                message={modalMessage}
+                type={modalType}
+            />
 
             <Text style={styles.sectionTitle}>Asset Information</Text>
 
@@ -56,6 +82,7 @@ export default function AddAsset() {
                 <TextInput
                     placeholder="ASSET PRICE"
                     value={values.price}
+                    keyboardType='numeric'
                     onChangeText={(text) => {
                         setValues({
                             ...values,
@@ -70,6 +97,7 @@ export default function AddAsset() {
                 <TextInput
                     placeholder="QUANTITY"
                     value={values.qty}
+                    keyboardType='numeric'
                     onChangeText={(text) => {
                         setValues({
                             ...values,
@@ -117,6 +145,12 @@ const styles = StyleSheet.create({
         fontFamily: font.secondary,
         color: '#75AB38',
         marginBottom: 10,
+    },
+    loaderContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F9F9F9',
     },
     row: {
         // flexDirection: 'row',
