@@ -610,22 +610,29 @@ if (loading) {
           </Portal>
 
           <Text style={styles.sectionTitle}>Mess Information</Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <TouchableOpacity
-              style={[styles.button1, messStatus === 'yes' && styles.activeButton]}
-              onPress={() => {
-                setMessStatus('yes');
-              }}>
-              <Text style={{ color: 'white' }}>YES</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button2, messStatus === 'no' && styles.activeButton]}
-              onPress={() => {
-                setMessStatus('no');
-              }}>
-              <Text style={{ color: 'black' }}>NO</Text>
-            </TouchableOpacity>
-          </View>
+         <View style={{ flexDirection: 'row', gap: 10 }}>
+                     <TouchableOpacity
+                       style={[
+                         styles.button1,
+                         messStatus === 'yes'
+                           ? { backgroundColor: '#75AB38' }
+                           : { backgroundColor: '#fff', borderWidth: 1, borderColor: '#75AB38' },
+                       ]}
+                       onPress={() => setMessStatus('yes')}>
+                       <Text style={{ color: messStatus === 'yes' ? '#fff' : '#75AB38' }}>YES</Text>
+                     </TouchableOpacity>
+         
+                     <TouchableOpacity
+                       style={[
+                         styles.button2,
+                         messStatus === 'no'
+                           ? { backgroundColor: '#75AB38' }
+                           : { backgroundColor: '#fff', borderWidth: 1, borderColor: '#75AB38' },
+                       ]}
+                       onPress={() => setMessStatus('no')}>
+                       <Text style={{ color: messStatus === 'no' ? '#fff' : '#75AB38' }}>NO</Text>
+                     </TouchableOpacity>
+                   </View>
           {messStatus === 'yes' ? (
             <>
               <TextInput

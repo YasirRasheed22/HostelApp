@@ -25,33 +25,33 @@ export default function TenantView() {
   const navigation = useNavigation();
 
   const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
-};
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
 
-  useLayoutEffect(()=>{
-navigation.setOptions({
-    headerRight: () => (
-      <View style={styles.headerButtons}>
-        <TouchableOpacity
-          onPress={handleEdit}
-          style={[styles.buttonContainer, styles.editButton]}>
-          <Text style={styles.buttonText}><FontAwesome name='pencil'/></Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleDelete}
-          style={[styles.buttonContainer, styles.deleteButton]}>
-          <Text style={styles.buttonText}><AntDesign name='delete'/></Text>
-        </TouchableOpacity>
-      </View>
-    ),
-  });
-  },[navigation])
-  
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerButtons}>
+          <TouchableOpacity
+            onPress={handleEdit}
+            style={[styles.buttonContainer, styles.editButton]}>
+            <Text style={styles.buttonText}><FontAwesome name='pencil' /></Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleDelete}
+            style={[styles.buttonContainer, styles.deleteButton]}>
+            <Text style={styles.buttonText}><AntDesign name='delete' /></Text>
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [navigation])
+
 
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -77,12 +77,12 @@ navigation.setOptions({
   }, [id, isFocussed]);
 
   function formatToPakistaniCurrency(amount) {
-  return new Intl.NumberFormat('en-PK', {
+    return new Intl.NumberFormat('en-PK', {
       style: 'currency',
       currency: 'PKR',
       minimumFractionDigits: 0
-  }).format(amount);
-}
+    }).format(amount);
+  }
 
   const handleEdit = () => {
     console.log('User ID from edit view:', id);
@@ -178,16 +178,22 @@ navigation.setOptions({
         <Row label="Room Fee" value={user?.rentForRoom} />
         <Row label="Security Fee" value={formatToPakistaniCurrency(user?.securityFees)} />
       </View>
-      <Text style={styles.sectionTitle}>Property Information</Text>
-      <View style={styles.card}>
-        {user?.property_info ? (
-          JSON.parse(user.property_info).map((property, index) => (
-            <Row key={index} label={`Property ${index + 1}`} value={property} />
-          ))
-        ) : (
-          <Text style={{ color: 'gray' }}>No property information available.</Text>
-        )}
-      </View>
+      {JSON.parse(user.property_info).length !== 0 ? (
+        <>
+          <Text style={styles.sectionTitle}>Property Information</Text>
+          <View style={styles.card}>
+            {user?.property_info ? (
+              JSON.parse(user.property_info).map((property, index) => (
+                <Row key={index} label={`Property ${index + 1}`} value={property} />
+              ))
+            ) : (
+              <Text style={{ color: 'gray' }}>No property information available.</Text>
+            )}
+          </View></>
+        
+      )  :null 
+      }
+
     </>
   );
 
@@ -236,22 +242,22 @@ navigation.setOptions({
   );
 
   const Row = ({ label, value, onPress }) => {
-  const Wrapper = onPress ? TouchableOpacity : View;
+    const Wrapper = onPress ? TouchableOpacity : View;
 
-  return (
-    <Wrapper onPress={onPress} style={styles.row}>
-      <Text style={styles.label}>{label}</Text>
-      <Text
-        style={[
-          styles.value,
-          onPress && { color: 'blue', textDecorationLine: 'none' },
-        ]}
-      >
-        {value ?? 'N/A'}
-      </Text>
-    </Wrapper>
-  );
-};
+    return (
+      <Wrapper onPress={onPress} style={styles.row}>
+        <Text style={styles.label}>{label}</Text>
+        <Text
+          style={[
+            styles.value,
+            onPress && { color: 'blue', textDecorationLine: 'none' },
+          ]}
+        >
+          {value ?? 'N/A'}
+        </Text>
+      </Wrapper>
+    );
+  };
 
 
   if (!user) return <Text style={{ padding: 20 }}>Loading...</Text>;
